@@ -11,6 +11,7 @@
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.3",
     "core-js": "^3.8.3",
+    "sass": "^1.77.6",
     "vue": "^3.2.13"
   },
   "devDependencies": {
@@ -20,7 +21,8 @@
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-service": "^5.0.8",
     "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^8.0.3"
+    "eslint-plugin-vue": "^8.0.3",
+    "vite": "^5.3.3"
   },
   "eslintConfig": {
     "root": true,
