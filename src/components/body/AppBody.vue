@@ -1,50 +1,107 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import EditTodoDialog from './EditTodoDialog.vue';
+import { v7 as uuidv7 } from 'uuid';
+import { displayGlobalAlert, alertType } from '../helpercode/AlertHelper.js'
+import { returnCurrentDateTimeArray } from '../helpercode/CommonMethods.js'
 
-let todoList = ref([]);
+// SETUP SECTION -- START
+let TODOS = ref([]);
 var newTodoDescription = ref(0);
 
+//-------------------------------------------------------------------------------------------
+/**
+ * handles count of all added todos 
+ */
 const totalTodosAdded = computed(() => {
-  return todoList.value.length;
+  return TODOS.value.length;
 });
-
+//-------------------------------------------------------------------------------------------
+/**
+ * handles description length of a yet to be added todo
+ */
 const todoDescriptionLength = computed(() => {
   return newTodoDescription.value;
 });
-
+//-------------------------------------------------------------------------------------------
+/**
+ * mounts to todoDescription and parses length to @newTodoDescription
+ */
 onMounted(() => {
   var todoDescriptionTextArea = document.getElementById("todoDescription");
   todoDescriptionTextArea.addEventListener("input", function() {
     newTodoDescription.value = todoDescriptionTextArea.value.length;
   });
 });
+// SETUP SECTION -- END 
+// MAIN LOGIC SECTION -- START
+//-------------------------------------------------------------------------------------------
+/**
+ * returns a new created todo html element
+ */
+function createNewTodoElement(todoTitleElement, todoDescriptionElement) {
+  const todoElementId = uuidv7();
+  const todoTitleValue = todoTitleElement?.value ?? '';
+  const todoDescriptionValue = todoDescriptionElement?.value ?? '';
+  const [date, time] = returnCurrentDateTimeArray();
+  //const todoListElement = createTodoElement(todoElementId.toString(), date, time, todoTitleValue, todoDescriptionValue);
 
-// function checkValidInput() {
-//     var todoInput = document.getElementById('todoInput')?.value;
-//     if (!todoInput) {
-//         alert('Todo Input is empty');
-//         return false;
-//     }
-//     return true;
-// }
+  var subtasks = [{}];
 
-var count = 0;
+  TODOS.value.push({
+    Id: todoElementId,
+    Version: 1,
+    CreatedAtDate: date,
+    CreatedAtTime: time,
+    Title: todoTitleValue,
+    Description: todoDescriptionValue,
+    Subtasks: subtasks,
+    Metadata: {
+      Id: uuidv7(),
+      ParentObject: todoElementId,
+      IsChecked: false
+    }
+  });
+}
+//-------------------------------------------------------------------------------------------
+/**
+ * validates todot title input to not be empty
+ */
+function checkValidInput() {
+    var todoInput = document.getElementById('todoInput')?.value;
+    if (!todoInput) {
+        alert('Todo Input is empty');
+        return false;
+    }
+    return true;
+}
+//-------------------------------------------------------------------------------------------
+/**
+ * returns a new created todo html element
+ */
 function createNewTodo() {
-    count++;
-    const testElement = document.createElement('div');
-    testElement.id = 'testElement_' + count;
-    document.getElementById('todoList-list-group').appendChild(testElement);
-    todoList.value.push(testElement);
-}
+    if (!checkValidInput()) return;
+    
+    var todoTitleElement = document.getElementById('todoInput');
+    var todoDescriptionElement = document.getElementById('todoDescription');
 
-function synchronizeTodos() {
-    var element = document.getElementById('testElement_' + count);
-    count = count-1;
-    const index = todoList.value.indexOf(element);
-    todoList.value.splice(index, 1);
-    element.remove();
+    displayGlobalAlert("Test Alert", alertType.success);
+
+    createNewTodoElement(todoTitleElement, todoDescriptionElement);
 }
+//-------------------------------------------------------------------------------------------
+/**
+ * synchronizes frontend todo list with backend
+ */
+function synchronizeTodos() {
+    // var element = document.getElementById('testElement_' + count);
+    // count = count-1;
+    // const index = TODOS.value.indexOf(element);
+    // TODOS.value.splice(index, 1);
+    // element.remove();
+    console.log("");
+}
+// MAIN LOGIC SECTION -- END
 </script>
 
 <template>
