@@ -97,8 +97,8 @@ function createNewTodo() {
     displayGlobalAlert("Todo could not be added!", alertType.error);
   }
 
-  document.getElementById('todoInput').value = "Dies ist eine Test Todo";
-  document.getElementById("todoDescription").value = "Dies ist die Beschreibung eines Test Todos";
+  document.getElementById('todoInput').value = "";
+  document.getElementById("todoDescription").value = "";
 
   //reset reactive description length value manuelly
   updateDescriptionLengthValue();
@@ -131,7 +131,6 @@ function synchronizeTodos() {
                 class="form-control"
                 id="todoInput"
                 placeholder="Input Todo"
-                value="Dies ist eine Test Todo"
               />
             </div>
             <div class="mb-3" style="margin-top: 10px">
@@ -143,7 +142,7 @@ function synchronizeTodos() {
                 class="form-control"
                 rows="3"
                 placeholder="Input Todo Description"
-              >Dies ist die Beschreibung eines Test Todos</textarea>
+              ></textarea>
               <p>{{ todoDescriptionLength }} / 200</p>
             </div>
             <button

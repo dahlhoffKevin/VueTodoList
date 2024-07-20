@@ -21,10 +21,6 @@ function saveTodo() {
   console.log('Saving todo:', editedTodo.value);
   closeDialog();
 }
-
-function addSubtask() {
-  alert("test");
-}
 </script>
 
 <template>
@@ -58,16 +54,6 @@ function addSubtask() {
             :value="`${todo.description}`"
           />
           <ul id="subtasks"></ul>
-          <div style="padding-top: 10px !important">
-            <div
-              class="d-flex justify-content-between align-items-center"
-              style="padding-bottom: 10px">
-              <input type="text" class="form-control" id="inputSubtaskTodo" placeholder="Subtask"/>
-              <button id="btnEditTodoDialogAddSubtask" type="button" class="btn btn-outline-success" style="margin-left: 5px;" @click="addSubtask">
-                  Add
-              </button>
-            </div>
-          </div>
         </div>
         <div class="modal-footer">
           <button id="btnTodoDialogClose" type="button" class="btn btn-outline-secondary" @click="closeDialog" style="margin-right: 10px!important;">Close</button>
