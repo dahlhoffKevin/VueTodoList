@@ -36,14 +36,10 @@ function addSubtask() {
     aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header" style="margin-bottom: 10px!important;">
           <h5 class="modal-title" id="todoDialogTitle">Edit Todo</h5>
         </div>
         <div class="modal-body">
-          <div class="d-flex w-100 justify-content-between">
-            <h5 id="todoDialogDate">{{ todo.date }}</h5>
-            <small id="todoDialogTime">{{ todo.time }}</small>
-          </div>
           <label class="form-label is-invalid">Title</label>
           <input
             type="text"

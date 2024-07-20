@@ -21,7 +21,7 @@ var newTodoDescription = ref(0);
 provide('TODOS', TODOS);
 provide('updateTodosArrayLength', (newTodoArray) => {
   TODOS.value = newTodoArray;
-})
+});
 
 const totalTodosAdded = computed(() => {
   return TODOS.value.length;
@@ -57,8 +57,6 @@ function createNewTodoElement(todoTitleElement, todoDescriptionElement) {
   const todoDescriptionValue = todoDescriptionElement?.value ?? "";
   const [date, time] = returnCurrentDateTimeArray();
 
-  var subtasks = [{}];
-
   var todoObject = {
     Id: todoElementId,
     Version: 1,
@@ -66,7 +64,7 @@ function createNewTodoElement(todoTitleElement, todoDescriptionElement) {
     CreatedAtTime: time,
     Title: todoTitleValue,
     Description: todoDescriptionValue,
-    Subtasks: subtasks,
+    Subtasks: [],
     Metadata: {
       MetadataId: metadataId,
       ParentObject: todoElementId,
@@ -193,6 +191,7 @@ function synchronizeTodos() {
                     :time="todo.CreatedAtTime"
                     :title="todo.Title"
                     :description="todo.Description"
+                    :subtasks="todo.Subtasks"
                     @edit-todo="openEditDialog"
                   />
                 </ul>
