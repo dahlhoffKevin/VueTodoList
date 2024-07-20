@@ -25,19 +25,27 @@ export default defineComponent({
       required: true
     },
   },
-  setup(props) {
+  setup(props, { emit }) {
     const updateTodosArrayLength = inject('updateTodosArrayLength');
+    const TODOS = inject('TODOS');
+    
     const btnFinishTodo = () => {
-      document.getElementById('todoItem_' + props.todoElementId).remove();
-      var newTodoArray = [];
-      document.getElementById('todoList-list-group').childNodes.forEach((todoElement) => {
-        newTodoArray.push(todoElement);
-      });
+      // filter() creates a new array bassed on a filter expression provided to the filter() method
+      // every todoElements id that is not equal to the todo elemnents id that should be finished is included in the newTodoArray array
+      // but the todo Element with the id of the element that should be finished is excluded
+      // than the TODOS array is updated with the new array
+      const newTodoArray = TODOS.value.filter(todo => todo.Id !== props.todoElementId);
       updateTodosArrayLength(newTodoArray);
     };
 
     const btnOpenTodoEditDialog = () => {
-      // Implementation for editing todo
+      emit('edit-todo', {
+        todoElementId: props.todoElementId,
+        date: props.date,
+        time: props.time,
+        title: props.title,
+        description: props.description
+      });
     };
 
     const btnAddSubtaskToTodo = () => {
@@ -45,7 +53,8 @@ export default defineComponent({
     };
 
     const btnDeleteTodo = () => {
-      // Implementation for deleting todo
+      const newTodoArray = TODOS.value.filter(todo => todo.Id !== props.todoElementId);
+      updateTodosArrayLength(newTodoArray);
     };
 
     return {
@@ -71,7 +80,7 @@ export default defineComponent({
         <h4 :id="`todoTitle_${todoElementId}`" class="mb-1">{{ title }}</h4>
         <div>
             <small :id="`todoDate_${todoElementId}`" class="mb-1">{{ date }}</small>
-            <small>-</small>
+            <small> - </small>
             <small :id="`todoTime_${todoElementId}`">{{ time }}</small>
         </div>
     </div>

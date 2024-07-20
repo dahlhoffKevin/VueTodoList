@@ -8,29 +8,34 @@ import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
 
 // SETUP SECTION -- START
 let TODOS = ref([]);
+let showEditDialog = ref(false);
+let currentTodo = ref({
+    todoElementId: "",
+    date: "",
+    time: "",
+    title: "",
+    description: ""
+  });
 var newTodoDescription = ref(0);
+
+provide('TODOS', TODOS);
 provide('updateTodosArrayLength', (newTodoArray) => {
   TODOS.value = newTodoArray;
 })
 
-//-------------------------------------------------------------------------------------------
-/**
- * handles count of all added todos
- */
 const totalTodosAdded = computed(() => {
   return TODOS.value.length;
 });
-//-------------------------------------------------------------------------------------------
-/**
- * handles description length of a yet to be added todo
- */
+
 const todoDescriptionLength = computed(() => {
   return newTodoDescription.value;
 });
-//-------------------------------------------------------------------------------------------
-/**
- * mounts to todoDescription and parses length to @newTodoDescription
- */
+
+function openEditDialog(todo) {
+  currentTodo.value = todo;
+  showEditDialog.value = true;
+}
+
 onMounted(() => {
   var todoDescriptionTextArea = document.getElementById("todoDescription");
   todoDescriptionTextArea.addEventListener("input", function () {
@@ -40,10 +45,6 @@ onMounted(() => {
 // SETUP SECTION -- END
 
 // MAIN LOGIC SECTION -- START
-//-------------------------------------------------------------------------------------------
-/**
- * returns a new created todo html element
- */
 function updateDescriptionLengthValue() {
   newTodoDescription.value =
     document.getElementById("todoDescription").value.length;
@@ -75,10 +76,7 @@ function createNewTodoElement(todoTitleElement, todoDescriptionElement) {
 
   TODOS.value.push(todoObject);
 }
-//-------------------------------------------------------------------------------------------
-/**
- * validates todot title input to not be empty
- */
+
 function checkValidInput() {
   var todoInput = document.getElementById("todoInput")?.value;
   if (!todoInput) {
@@ -87,10 +85,7 @@ function checkValidInput() {
   }
   return true;
 }
-//-------------------------------------------------------------------------------------------
-/**
- * returns a new created todo html element
- */
+
 function createNewTodo() {
   if (!checkValidInput()) return;
 
@@ -101,21 +96,16 @@ function createNewTodo() {
     createNewTodoElement(todoTitleElement, todoDescriptionElement);
   } catch (error) {
     console.error(error);
-    displayGlobalAlert("Todo could not be added!", alertType.danger);
+    displayGlobalAlert("Todo could not be added!", alertType.error);
   }
 
-  // document.getElementById('todoInput').value = "";
-  document.getElementById("todoDescription").value = "";
+  document.getElementById('todoInput').value = "Dies ist eine Test Todo";
+  document.getElementById("todoDescription").value = "Dies ist die Beschreibung eines Test Todos";
 
   //reset reactive description length value manuelly
   updateDescriptionLengthValue();
-
-  displayGlobalAlert("Successfully added todo!", alertType.success);
 }
-//-------------------------------------------------------------------------------------------
-/**
- * synchronizes frontend todo list with backend
- */
+
 function synchronizeTodos() {
   displayGlobalAlert("Not yet implemented", alertType.warning);
 }
@@ -124,7 +114,6 @@ function synchronizeTodos() {
 
 <template>
   <div>
-    <EditTodoDialog />
     <div class="container text-center">
       <h1 class="headline">Todo List</h1>
     </div>
@@ -156,7 +145,7 @@ function synchronizeTodos() {
                 class="form-control"
                 rows="3"
                 placeholder="Input Todo Description"
-              ></textarea>
+              >Dies ist die Beschreibung eines Test Todos</textarea>
               <p>{{ todoDescriptionLength }} / 200</p>
             </div>
             <button
@@ -186,7 +175,13 @@ function synchronizeTodos() {
                     Add Todos to be displayed!
                   </h4>
                 </div>
+                <EditTodoDialog
+                  v-if="showEditDialog"
+                  :todo="currentTodo"
+                  @close-dialog="showEditDialog = false"
+                />
                 <ul
+                  v-else
                   id="todoList-list-group"
                   class="list-group"
                   v-for="todo in TODOS"
@@ -198,6 +193,7 @@ function synchronizeTodos() {
                     :time="todo.CreatedAtTime"
                     :title="todo.Title"
                     :description="todo.Description"
+                    @edit-todo="openEditDialog"
                   />
                 </ul>
               </div>

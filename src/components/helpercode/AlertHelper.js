@@ -2,7 +2,7 @@ export const alertType = {
     primary: "primary",
     secondary: "secondary",
     success: "success",
-    danger: "danger",
+    error: "danger",
     warning: "warning",
     info: "info",
     light: "light",

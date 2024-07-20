@@ -7,7 +7,7 @@ export function returnCurrentDateTimeArray() {
     const currentDate = new Date();
     const day = currentDate.getDate();
     const dayString = day < 10 ? '0' + day : day.toString();
-    const month = currentDate.getMonth();
+    const month = currentDate.getMonth() + 1;
     const monthString = month < 10 ? '0' + month : month.toString();
     const date = `${dayString}.${monthString}.${currentDate.getFullYear()}`;
 
