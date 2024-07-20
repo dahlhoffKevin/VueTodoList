@@ -2,7 +2,7 @@
 /**
  * returns the current date and time as array
  */
-function returnCurrentDateTimeArray() {
+export function returnCurrentDateTimeArray() {
     //get date
     const currentDate = new Date();
     const day = currentDate.getDate();
@@ -18,5 +18,3 @@ function returnCurrentDateTimeArray() {
 
     return [date, time];
 }
-
-export default { returnCurrentDateTimeArray };
