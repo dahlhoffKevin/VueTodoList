@@ -43,7 +43,7 @@ export default defineComponent({
     let subtaskId = "";
 
     provide('SUBTASKS', SUBTASKS);
-    provide('updateTodosArrayLength', (newSubtaskArray) => {
+    provide('updateSubtaskArray', (newSubtaskArray) => {
       SUBTASKS.value = newSubtaskArray;
     });
     
@@ -113,7 +113,6 @@ export default defineComponent({
         <span class="title">Subtasks</span>
         <li
           class="d-flex justify-content-between align-items-center"
-          style="padding-bottom: 5px !important"
           v-for="subtask in SUBTASKS"
           :key="subtask.subtaskElementId"
         >

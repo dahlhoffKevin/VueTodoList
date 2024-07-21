@@ -38,7 +38,7 @@ export default {
   position: relative;
   border: 1px solid #495057;
   border-radius: 5px;
-  padding: 1rem;
+  padding: 1rem 1rem 0rem 1rem;
   margin-top: 2rem;
 }
 .border-with-title .title {
