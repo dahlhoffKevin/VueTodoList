@@ -4,12 +4,13 @@
 </template>
 
 <script>
-//import AppHeader from './components/header/AppHeader.vue';
+import AppHeader from './components/header/AppHeader.vue';
 import AppBody from './components/body/AppBody.vue';
 
 export default {
   name: 'App',
   components: {
+    AppHeader,
     AppBody
   }
 }

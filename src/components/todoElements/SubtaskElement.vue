@@ -1,5 +1,6 @@
 <script>
 import { defineComponent, inject } from "vue";
+import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
 
 export default defineComponent({
   name: "SubtaskElement",
@@ -29,18 +30,20 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const SUBTASKS = inject("SUBTASKS");
-    const updateSubtaskArrayFn = inject("updateSubtaskArray");
+    const SUBTASKS = inject('SUBTASKS');
+    const updateSubtaskArrayFn = inject('updateSubtaskArray');
+    const updateTodoInMainArrayFn = inject('updateTodoInMainArray');
 
     const btnFinishSubtask = () => {
-      console.log(props.metadata.isChecked);
-
+      const [date, time] = returnCurrentDateTimeArray();
+      
       const subtaskIndex = SUBTASKS.value.findIndex(
         (subtask) => subtask.subtaskElementId === props.subtaskElementId
       );
 
       SUBTASKS.value[subtaskIndex].metadata.isChecked = !props.metadata.isChecked;
       updateSubtaskArrayFn(SUBTASKS.value);
+      updateTodoInMainArrayFn({ todoElementId: props.parentTodoId, metadata: { timeAtUpdate: time, dateAtUpdate: date} });
     };
 
     return {

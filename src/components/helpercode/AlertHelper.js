@@ -22,7 +22,7 @@ export function displayAlert(alertText, alertType) {
     alertPlaceholder?.appendChild(alert);
     setTimeout(() => {
         alert.remove();
-    }, 5000);
+    }, 10000);
 }
 
 export function displayGlobalAlert(alertText, alertType) {
@@ -38,5 +38,5 @@ export function displayGlobalAlert(alertText, alertType) {
     alertPlaceholder?.appendChild(alert);
     setTimeout(() => {
         alert.remove();
-    }, 5000);
+    }, 10000);
 }

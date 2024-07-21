@@ -9,19 +9,71 @@ import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
 // SETUP SECTION -- START
 let TODOS = ref([]);
 let showEditDialog = ref(false);
-let currentTodo = ref({
-    todoElementId: "",
-    date: "",
-    time: "",
-    title: "",
-    description: ""
-  });
+let currentTodo = ref();
 var newTodoDescription = ref(0);
 
 provide('TODOS', TODOS);
-provide('updateTodosArrayLength', (newTodoArray) => {
+provide('updateTodoArray', (newTodoArray) => {
   TODOS.value = newTodoArray;
 });
+provide('updateTodoInMainArray', (todoElement) => {
+  console.log(todoElement);
+  if (!Array.isArray(TODOS.value)) {
+    return;
+  }
+  
+  // Find the index of the item with the matching todoElementId
+  const todoIndex = TODOS.value.findIndex(
+    (todo) => todo.todoElementId === todoElement.todoElementId
+  );
+
+  if (todoIndex === -1) {
+    displayGlobalAlert('We are sorry, but we could not update your todo! Please try again later.', alertType.error);
+    return;
+  }
+  
+  // Find the current todo object
+  const currentTodoObject = TODOS.value[todoIndex];
+  let updated = false; // Flag to check if we have any updates
+  
+  // Create a new object that will store the updated values
+  const updatedTodoObject = { ...currentTodoObject };
+
+  // Loop through the properties of the new todo element
+  for (const [key, value] of Object.entries(todoElement)) {
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      if (JSON.stringify(currentTodoObject[key]) !== JSON.stringify(value)) {
+        updatedTodoObject[key] = value;
+        updated = true;
+      }
+    } else if (Array.isArray(value)) {
+      if (!arraysAreEqual(currentTodoObject[key], value)) {
+        updatedTodoObject[key] = value;
+        updated = true;
+      }
+    } else {
+      if (currentTodoObject[key] !== value) {
+        updatedTodoObject[key] = value;
+        updated = true;
+      }
+    }
+  }
+
+  // If there are updates, assign the updated object to the array
+  if (updated) {
+    TODOS.value[todoIndex] = updatedTodoObject;
+    displayGlobalAlert("Todo updated successfully", alertType.success);
+  } else displayGlobalAlert("A todo update request was detected, but there were no changes on the requested todo element found!", alertType.error);
+});
+
+// Helper function to compare two arrays
+function arraysAreEqual(arr1, arr2) {
+  if (arr1.length !== arr2.length) return false;
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) return false;
+  }
+  return true;
+}
 
 const totalTodosAdded = computed(() => {
   return TODOS.value.length;
@@ -58,17 +110,19 @@ function createNewTodoElement(todoTitleElement, todoDescriptionElement) {
   const [date, time] = returnCurrentDateTimeArray();
 
   var todoObject = {
-    Id: todoElementId,
+    todoElementId: todoElementId,
     Version: 1,
-    CreatedAtDate: date,
-    CreatedAtTime: time,
-    Title: todoTitleValue,
-    Description: todoDescriptionValue,
-    Subtasks: [],
-    Metadata: {
-      MetadataId: metadataId,
-      ParentObject: todoElementId,
-      IsChecked: false,
+    date: date,
+    time: time,
+    title: todoTitleValue,
+    description: todoDescriptionValue,
+    subtasks: [],
+    metadata: {
+      metadataId: metadataId,
+      parentObjectId: todoElementId,
+      isChecked: false,
+      timeAtUpdate: null,
+      dateAtUpdate: null
     },
   };
 
@@ -78,7 +132,7 @@ function createNewTodoElement(todoTitleElement, todoDescriptionElement) {
 function checkValidInput() {
   var todoInput = document.getElementById("todoInput")?.value;
   if (!todoInput) {
-    alert("Todo Input is empty");
+    displayGlobalAlert("You need to provide a title for the todo", alertType.error);
     return false;
   }
   return true;
@@ -185,12 +239,13 @@ function synchronizeTodos() {
                   :key="todo.Id"
                 >
                   <TodoElement
-                    :todoElementId="todo.Id"
-                    :date="todo.CreatedAtDate"
-                    :time="todo.CreatedAtTime"
-                    :title="todo.Title"
-                    :description="todo.Description"
-                    :subtasks="todo.Subtasks"
+                    :todoElementId="todo.todoElementId"
+                    :date="todo.date"
+                    :time="todo.time"
+                    :title="todo.title"
+                    :description="todo.description"
+                    :subtasks="todo.subtasks"
+                    :metadata="todo.metadata"
                     @edit-todo="openEditDialog"
                   />
                 </ul>
