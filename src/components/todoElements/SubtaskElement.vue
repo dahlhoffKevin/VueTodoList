@@ -5,7 +5,7 @@ import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
 export default defineComponent({
   name: "SubtaskElement",
   props: {
-    subtaskElementId: {
+    subtaskId: {
       type: String,
       required: true,
     },
@@ -17,17 +17,10 @@ export default defineComponent({
       type: String,
       required: true,
     },
-    metadata: {
-      type: Object,
+    isChecked: {
+      type: Boolean,
       required: true,
-      validator(value) {
-        return (
-          typeof value.metadataId === 'string' &&
-          typeof value.parentObjectId === 'string' &&
-          typeof value.isChecked === 'boolean'
-        );
-      }
-    },
+    }
   },
   setup(props) {
     const SUBTASKS = inject('SUBTASKS');
@@ -38,10 +31,10 @@ export default defineComponent({
       const [date, time] = returnCurrentDateTimeArray();
       
       const subtaskIndex = SUBTASKS.value.findIndex(
-        (subtask) => subtask.subtaskElementId === props.subtaskElementId
+        (subtask) => subtask.subtaskId === props.subtaskId
       );
 
-      SUBTASKS.value[subtaskIndex].metadata.isChecked = !props.metadata.isChecked;
+      SUBTASKS.value[subtaskIndex].isChecked = !props.isChecked;
       updateSubtaskArrayFn(SUBTASKS.value);
       updateTodoInMainArrayFn({ todoElementId: props.parentTodoId, metadata: { timeAtUpdate: time, dateAtUpdate: date} });
     };
@@ -59,18 +52,18 @@ export default defineComponent({
       <input
         class="form-check-input mt-0"
         type="checkbox"
-        :checked="metadata.isChecked"
+        :checked="isChecked"
         @click="btnFinishSubtask"
       />
     </div>
     <input
-      :id="`subtask_input_${subtaskElementId}`"
+      :id="`subtask_input_${subtaskId}`"
       type="text"
       class="form-control"
       aria-label="Text input with checkbox"
       :value="`${title}`"
-      :style="{ textDecoration: metadata.isChecked ? 'line-through' : 'none' }"
-      :disabled="metadata.isChecked"
+      :style="{ textDecoration: isChecked ? 'line-through' : 'none' }"
+      :disabled="isChecked"
     />
   </div>
 </template>

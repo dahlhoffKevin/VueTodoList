@@ -42,8 +42,8 @@ function saveTodo() {
   const [date, time] = returnCurrentDateTimeArray();
   editedTodo.value.title = document.getElementById('todoDialogTodoTitle').value;
   editedTodo.value.description = document.getElementById('todoDialogTodoDescription').value;
-  editedTodo.value.metadata.dateAtUpdate = date;
-  editedTodo.value.metadata.timeAtUpdate = time;
+  editedTodo.value.dateAtUpdate = date;
+  editedTodo.value.timeAtUpdate = time;
 
   var newtodoArray = editedTodo.value;
   updateTodoInMainArray(newtodoArray);

@@ -5,12 +5,15 @@ import TodoElement from "../todoElements/TodoElement.vue";
 import { v7 as uuidv7 } from "uuid";
 import { displayGlobalAlert, alertType } from "../helpercode/AlertHelper.js";
 import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
+import PocketBase from 'pocketbase';
 
 // SETUP SECTION -- START
 let TODOS = ref([]);
 let showEditDialog = ref(false);
 let currentTodo = ref();
 var newTodoDescription = ref(0);
+
+const pb = new PocketBase(process.env.VUE_APP_API_URL);
 
 provide('TODOS', TODOS);
 provide('updateTodoArray', (newTodoArray) => {
@@ -102,14 +105,25 @@ function updateDescriptionLengthValue() {
     document.getElementById("todoDescription").value.length;
 }
 
-function createNewTodoElement(todoTitleElement, todoDescriptionElement) {
-  const todoElementId = uuidv7();
-  const metadataId = uuidv7();
-  const todoTitleValue = todoTitleElement?.value ?? "";
-  const todoDescriptionValue = todoDescriptionElement?.value ?? "";
-  const [date, time] = returnCurrentDateTimeArray();
+// function returnNewMetadataObjectForTodoObject() {
 
-  var todoObject = {
+// }
+
+function returnNewTodoObject(todoTitleValue, todoDescriptionValue, apiObject = false) {
+  const todoElementId = uuidv7();
+  const [date, time] = returnCurrentDateTimeArray();
+  
+  if (apiObject) {
+    return {
+      'todoId': todoElementId.toString(),
+      'title': todoTitleValue,
+      'description': todoDescriptionValue,
+      'isChecked': true,
+      'version': 1
+    };
+  }
+
+  return {
     todoElementId: todoElementId,
     Version: 1,
     date: date,
@@ -117,16 +131,33 @@ function createNewTodoElement(todoTitleElement, todoDescriptionElement) {
     title: todoTitleValue,
     description: todoDescriptionValue,
     subtasks: [],
-    metadata: {
-      metadataId: metadataId,
-      parentObjectId: todoElementId,
-      isChecked: false,
-      timeAtUpdate: null,
-      dateAtUpdate: null
-    },
+    isChecked: false,
+    timeAtUpdate: null,
+    dateAtUpdate: null
   };
+}
 
-  TODOS.value.push(todoObject);
+async function uploadTodoToDatabase(todoTitleValue, todoDescriptionValue) {
+  const data = returnNewTodoObject(todoTitleValue, todoDescriptionValue, true);
+
+  try {
+    await pb.collection('users').authWithPassword(process.env.VUE_APP_API_USER, 
+      process.env.VUE_APP_API_USER_SECRET);
+  } catch (error) {
+    console.log(error);
+    displayGlobalAlert("We are currently experiencing server issues. Please try again later", alertType.error);
+    return false;
+  }
+  
+  try {
+    await pb.collection('todos').create(data);
+  } catch (error) {
+    console.log(error);
+    displayGlobalAlert("Something went wrong at uploading your todo!", alertType.error);
+    return false;
+  }
+
+  return true;
 }
 
 function checkValidInput() {
@@ -138,17 +169,21 @@ function checkValidInput() {
   return true;
 }
 
-function createNewTodo() {
+async function createNewTodo() {
   if (!checkValidInput()) return;
 
-  var todoTitleElement = document.getElementById("todoInput");
-  var todoDescriptionElement = document.getElementById("todoDescription");
+  var todoTitleValue = document.getElementById("todoInput")?.value ?? "";
+  var todoDescriptionValue = document.getElementById("todoDescription")?.value ?? "";
+  var todoObject = returnNewTodoObject(todoTitleValue, todoDescriptionValue);
+
+  var success = await uploadTodoToDatabase(todoTitleValue, todoDescriptionValue);
+  if (!success) return;
 
   try {
-    createNewTodoElement(todoTitleElement, todoDescriptionElement);
+    TODOS.value.push(todoObject);
   } catch (error) {
-    console.error(error);
-    displayGlobalAlert("Todo could not be added!", alertType.error);
+    displayGlobalAlert("Something went wrong while adding your todo to the list", alertType.error);
+    return;
   }
 
   document.getElementById('todoInput').value = "";
@@ -156,6 +191,7 @@ function createNewTodo() {
 
   //reset reactive description length value manuelly
   updateDescriptionLengthValue();
+  pb.authStore.clear();
 }
 
 function synchronizeTodos() {

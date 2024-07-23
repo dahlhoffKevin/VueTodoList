@@ -14,7 +14,8 @@ export function returnCurrentDateTimeArray() {
     //get time
     const minutes = currentDate.getMinutes();
     const hours = currentDate.getHours();
-    const time = `${(hours < 10 ? '0' + hours : hours)}:${(minutes < 10 ? '0' + minutes : minutes)} Uhr`;
+    const seconds = currentDate.getSeconds();
+    const time = `${(hours < 10 ? '0' + hours : hours)}:${(minutes < 10 ? '0' + minutes : minutes)}:${(seconds < 10 ? '0' + seconds : seconds)} Uhr`;
 
     return [date, time];
 }

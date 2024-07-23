@@ -2,7 +2,33 @@
 import { ref, inject, provide, defineComponent } from 'vue';
 import { v7 as uuidv7 } from "uuid";
 import SubtaskElement from './SubtaskElement.vue';
+import PocketBase from 'pocketbase';
+import { displayGlobalAlert, alertType } from "../helpercode/AlertHelper.js";
 
+const pb = new PocketBase(process.env.VUE_APP_API_URL);
+
+async function uploadSubtask(newSubtask) {
+  try {
+    await pb.collection('users').authWithPassword(process.env.VUE_APP_API_USER, 
+    process.env.VUE_APP_API_USER_SECRET);
+  } catch (error) {
+    console.log(error);
+    displayGlobalAlert("We are currently experiencing server issues. Please try again later", alertType.error);
+    return false;
+  }
+
+  try {
+    await pb.collection('subtasks').create(newSubtask);
+  } catch (error) {
+    console.log(error);
+    displayGlobalAlert("Something went wrong at uploading your todo!", alertType.error);
+    return false;
+  }
+
+  pb.authStore.clear();
+  return true;
+}
+ 
 export default defineComponent({
   name: "TodoElement",
   components: {
@@ -34,25 +60,23 @@ export default defineComponent({
       required: false,
       default: () => []
     },
-    metadata: {
-      type: Object,
+    timeAtUpdate: {
+      type: String,
       required: true,
-      validator(value) {
-        return (
-          typeof value.metadataId === 'string' &&
-          typeof value.parentObjectId === 'string' &&
-          typeof value.isChecked === 'boolean' &&
-          typeof value.timeAtUpdate === 'string' &&
-          typeof value.dateAtUpdate === 'string'
-        );
-      }
     },
+    dateAtUpdate: {
+      type: String,
+      required: true,
+    },
+    isChecked: {
+      type: Boolean,
+      required: true,
+    }
   },
   setup(props, { emit }) {
     const updateTodoArray = inject('updateTodoArray');
     const TODOS = inject('TODOS');
     let SUBTASKS = ref(props.subtasks);
-    let METADATA = {};
     let subtaskId = "";
 
     provide('SUBTASKS', SUBTASKS);
@@ -71,18 +95,16 @@ export default defineComponent({
 
     const btnAddSubtaskToTodo = () => {
       subtaskId = uuidv7();
-      METADATA = {
-        metadataId: uuidv7(),
-        parentObjectId: subtaskId,
-        isChecked: false
-      }
 
       var newSubtask = {
-        subtaskElementId: subtaskId,
         parentTodoId: props.todoElementId,
+        subtaskId: subtaskId,
         title: document.getElementById(`inputSubtaskTodo_${props.todoElementId}`).value,
-        metadata: METADATA
+        isChecked: false
       };
+
+      var success = uploadSubtask(newSubtask);
+      if (!success) return;
 
       SUBTASKS.value.push(newSubtask);
       document.getElementById(`inputSubtaskTodo_${props.todoElementId}`).value = "";
@@ -107,13 +129,14 @@ export default defineComponent({
 <template>
   <a :id="`todoItem_${todoElementId}`" class="list-group-item" data-toggle="modal" data-target="todoDialog" aria-current="true" style="margin-bottom: 10px;">
     <div class="d-flex w-100 justify-content-between">
-      <h4 :id="`todoTitle_${todoElementId}`" class="mb-1">{{ title }}</h4>
+      <p>TODO-0</p>
       <div>
         <small :id="`todoDate_${todoElementId}`" class="mb-1">{{ date }}</small>
         <small> - </small>
         <small :id="`todoTime_${todoElementId}`">{{ time }}</small>
       </div>
     </div>
+    <h4 :id="`todoTitle_${todoElementId}`" class="mb-1">{{ title }}</h4>
     <p :id="`todoDescription_${todoElementId}`" class="mb-1">{{ description }}</p>
     <ul class="list-group" :id="`subtasksTodo_${todoElementId}`">
       <div class="border-with-title">
@@ -124,10 +147,10 @@ export default defineComponent({
           :key="subtask.subtaskElementId"
         >
           <SubtaskElement
-            :subtaskElementId="subtask.subtaskElementId"
+            :subtaskId="subtask.subtaskElementId"
             :parentTodoId="subtask.parentTodoId"
             :title="subtask.title"
-            :metadata="subtask.metadata"
+            :isChecked="subtask.isChecked"
           />
         </li>
       </div>
@@ -160,9 +183,9 @@ export default defineComponent({
         </button>
       </div>
       <div style="padding-top: 20px">
-        <small :id="`todoUpdatedDate_${todoElementId}`" class="mb-1">Updated: {{ metadata.dateAtUpdate }}</small>
+        <small :id="`todoUpdatedDate_${todoElementId}`" class="mb-1">Updated: {{ dateAtUpdate }}</small>
         <small> - </small>
-        <small :id="`todoUpdatedTime_${todoElementId}`">{{ metadata.timeAtUpdate }}</small>
+        <small :id="`todoUpdatedTime_${todoElementId}`">{{ timeAtUpdate }}</small>
       </div>
     </div>
   </a>
