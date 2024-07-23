@@ -39,7 +39,7 @@ provide('updateTodoInMainArray', (todoElement) => {
   // Create a new object that will store the updated values
   const updatedTodoObject = { ...currentTodoObject };
 
-  // Loop through the properties of the new todo element
+  // Loop through the properties of the new todo element and only update properties in TODO array that has changed
   for (const [key, value] of Object.entries(todoElement)) {
     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
       if (JSON.stringify(currentTodoObject[key]) !== JSON.stringify(value)) {
