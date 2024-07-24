@@ -106,7 +106,6 @@ function updateDescriptionLengthValue() {
 }
 
 // function returnNewMetadataObjectForTodoObject() {
-
 // }
 
 function returnNewTodoObject(todoTitleValue, todoDescriptionValue, apiObject = false) {
@@ -281,7 +280,8 @@ function synchronizeTodos() {
                     :title="todo.title"
                     :description="todo.description"
                     :subtasks="todo.subtasks"
-                    :metadata="todo.metadata"
+                    :timeAtUpdate="todo.timeAtUpdate"
+                    :dateAtUpdate="todo.dateAtUpdate"
                     @edit-todo="openEditDialog"
                   />
                 </ul>
