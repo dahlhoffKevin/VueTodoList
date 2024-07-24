@@ -2,32 +2,6 @@
 import { ref, inject, provide, defineComponent } from 'vue';
 import { v7 as uuidv7 } from "uuid";
 import SubtaskElement from './SubtaskElement.vue';
-import PocketBase from 'pocketbase';
-import { displayGlobalAlert, alertType } from "../helpercode/AlertHelper.js";
-
-const pb = new PocketBase(process.env.VUE_APP_API_URL);
-
-async function uploadSubtask(newSubtask) {
-  try {
-    await pb.collection('users').authWithPassword(process.env.VUE_APP_API_USER, 
-    process.env.VUE_APP_API_USER_SECRET);
-  } catch (error) {
-    console.log(error);
-    displayGlobalAlert("We are currently experiencing server issues. Please try again later", alertType.error);
-    return false;
-  }
-
-  try {
-    await pb.collection('subtasks').create(newSubtask);
-  } catch (error) {
-    console.log(error);
-    displayGlobalAlert("Something went wrong at uploading your todo!", alertType.error);
-    return false;
-  }
-
-  pb.authStore.clear();
-  return true;
-}
  
 export default defineComponent({
   name: "TodoElement",
@@ -74,6 +48,7 @@ export default defineComponent({
     }
   },
   setup(props, { emit }) {
+    const uploadDataObject = inject('uploadDataObject');
     const updateTodoArray = inject('updateTodoArray');
     const TODOS = inject('TODOS');
     let SUBTASKS = ref(props.subtasks);
@@ -103,7 +78,7 @@ export default defineComponent({
         isChecked: false
       };
 
-      var success = uploadSubtask(newSubtask);
+      var success = uploadDataObject('subtasks', newSubtask);
       if (!success) return;
 
       SUBTASKS.value.push(newSubtask);
@@ -144,10 +119,10 @@ export default defineComponent({
         <li
           class="d-flex justify-content-between align-items-center"
           v-for="subtask in SUBTASKS"
-          :key="subtask.subtaskElementId"
+          :key="subtask.subtaskId"
         >
           <SubtaskElement
-            :subtaskId="subtask.subtaskElementId"
+            :subtaskId="subtask.subtaskId"
             :parentTodoId="subtask.parentTodoId"
             :title="subtask.title"
             :isChecked="subtask.isChecked"

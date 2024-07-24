@@ -1,6 +1,7 @@
 <script>
 import { defineComponent, inject } from "vue";
 import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
+import { displayGlobalAlert, alertType } from "../helpercode/AlertHelper.js";
 
 export default defineComponent({
   name: "SubtaskElement",
@@ -34,9 +35,16 @@ export default defineComponent({
         (subtask) => subtask.subtaskId === props.subtaskId
       );
 
-      SUBTASKS.value[subtaskIndex].isChecked = !props.isChecked;
+      try {
+        console.log(props);
+        SUBTASKS.value[subtaskIndex].isChecked = !props.isChecked;
+      } catch (error) {
+        console.log(error);
+        displayGlobalAlert(`Subtask could not be updated: ${error}`, alertType.error);
+        return;
+      }
       updateSubtaskArrayFn(SUBTASKS.value);
-      updateTodoInMainArrayFn({ todoElementId: props.parentTodoId, metadata: { timeAtUpdate: time, dateAtUpdate: date} });
+      updateTodoInMainArrayFn({ todoElementId: props.parentTodoId, timeAtUpdate: time, dateAtUpdate: date });
     };
 
     return {
