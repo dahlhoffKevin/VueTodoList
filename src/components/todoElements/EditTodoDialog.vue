@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, defineEmits, defineProps, computed, onMounted, inject } from 'vue';
+import { ref, watch, defineEmits, defineProps, computed, inject } from 'vue';
 import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
 
 const props = defineProps({ todo: Object });
@@ -17,20 +17,13 @@ watch(() => props.todo, (newTodo) => {
   descriptionHasChanged.value = false;
 });
 
+watch(editedTodo, (newEditedTodo) => {
+  titleHasChanged.value = props.todo.title !== newEditedTodo.title;
+  descriptionHasChanged.value = props.todo.description !== newEditedTodo.description;
+}, { deep: true });
+
 const isDisabled = computed(() => {
-  return titleHasChanged.value || descriptionHasChanged.value;
-});
-
-onMounted(() => {
-  const todoDialogTodoTitle = document.getElementById("todoDialogTodoTitle");
-  todoDialogTodoTitle.addEventListener("input", function () {
-    titleHasChanged.value = props.todo.title !== todoDialogTodoTitle.value;
-  });
-
-  const todoDialogTodoDescription = document.getElementById("todoDialogTodoDescription");
-  todoDialogTodoDescription.addEventListener("input", function () {
-    descriptionHasChanged.value = props.todo.description !== todoDialogTodoDescription.value;
-  });
+  return !titleHasChanged.value && !descriptionHasChanged.value;
 });
 
 function closeDialog() {
@@ -40,14 +33,11 @@ function closeDialog() {
 
 function saveTodo() {
   const [date, time] = returnCurrentDateTimeArray();
-  editedTodo.value.title = document.getElementById('todoDialogTodoTitle').value;
-  editedTodo.value.description = document.getElementById('todoDialogTodoDescription').value;
   editedTodo.value.dateAtUpdate = date;
   editedTodo.value.timeAtUpdate = time;
 
   var newtodoArray = editedTodo.value;
   updateTodoInMainArray(newtodoArray);
-
   closeDialog();
 }
 </script>
@@ -72,7 +62,7 @@ function saveTodo() {
             id="todoDialogTodoTitle"
             placeholder="Title"
             style="margin-bottom: 10px"
-            :value="todo.title"
+            v-model="editedTodo.title"
           />
           <label class="form-label is-invalid">Description</label>
           <input
@@ -80,13 +70,13 @@ function saveTodo() {
             class="form-control"
             id="todoDialogTodoDescription"
             placeholder="Description"
-            :value="todo.description"
+            v-model="editedTodo.description"
           />
           <ul id="subtasks"></ul>
         </div>
         <div class="modal-footer">
           <button id="btnTodoDialogClose" type="button" class="btn btn-outline-secondary" @click="closeDialog" style="margin-right: 10px!important;">Close</button>
-          <button id="btnTodoDialogSave" type="button" class="btn btn-outline-primary" @click="saveTodo" :disabled="!isDisabled">Save changes</button>
+          <button id="btnTodoDialogSave" type="button" class="btn btn-outline-primary" @click="saveTodo" :disabled="isDisabled">Save changes</button>
         </div>
       </div>
     </div>
