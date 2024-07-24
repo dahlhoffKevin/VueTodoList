@@ -85,7 +85,7 @@ export default defineComponent({
     });
     
     const btnFinishTodo = () => {
-      const newTodoArray = TODOS.value.filter(todo => todo.Id !== props.todoElementId);
+      const newTodoArray = TODOS.value.filter(todo => todo.todoElementId !== props.todoElementId);
       updateTodoArray(newTodoArray);
     };
 
@@ -111,7 +111,7 @@ export default defineComponent({
     };
 
     const btnDeleteTodo = () => {
-      const newTodoArray = TODOS.value.filter(todo => todo.Id !== props.todoElementId);
+      const newTodoArray = TODOS.value.filter(todo => todo.todoElementId !== props.todoElementId);
       updateTodoArray(newTodoArray);
     };
 
