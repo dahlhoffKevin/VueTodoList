@@ -16,6 +16,7 @@ var newTodoDescription = ref(0);
 const pb = new PocketBase(process.env.VUE_APP_API_URL);
 
 provide('TODOS', TODOS);
+provide('uploadDataObject', uploadDataObject);
 provide('updateTodoArray', (newTodoArray) => {
   TODOS.value = newTodoArray;
 });
@@ -136,9 +137,7 @@ function returnNewTodoObject(todoTitleValue, todoDescriptionValue, apiObject = f
   };
 }
 
-async function uploadTodoToDatabase(todoTitleValue, todoDescriptionValue) {
-  const data = returnNewTodoObject(todoTitleValue, todoDescriptionValue, true);
-
+async function uploadDataObject(dataCollection, data) {
   try {
     await pb.collection('users').authWithPassword(process.env.VUE_APP_API_USER, 
       process.env.VUE_APP_API_USER_SECRET);
@@ -149,7 +148,7 @@ async function uploadTodoToDatabase(todoTitleValue, todoDescriptionValue) {
   }
   
   try {
-    await pb.collection('todos').create(data);
+    await pb.collection(dataCollection).create(data);
   } catch (error) {
     console.log(error);
     displayGlobalAlert("Something went wrong at uploading your todo!", alertType.error);
@@ -171,11 +170,12 @@ function checkValidInput() {
 async function createNewTodo() {
   if (!checkValidInput()) return;
 
-  var todoTitleValue = document.getElementById("todoInput")?.value ?? "";
-  var todoDescriptionValue = document.getElementById("todoDescription")?.value ?? "";
-  var todoObject = returnNewTodoObject(todoTitleValue, todoDescriptionValue);
+  const todoTitleValue = document.getElementById("todoInput")?.value ?? "";
+  const todoDescriptionValue = document.getElementById("todoDescription")?.value ?? "";
+  const todoObject = returnNewTodoObject(todoTitleValue, todoDescriptionValue);
+  const data = returnNewTodoObject(todoTitleValue, todoDescriptionValue, true);
 
-  var success = await uploadTodoToDatabase(todoTitleValue, todoDescriptionValue);
+  var success = await uploadDataObject('todos', data);
   if (!success) return;
 
   try {
