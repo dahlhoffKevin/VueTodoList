@@ -1,8 +1,9 @@
 import { alertType, displayGlobalAlert } from './AlertHelper.js';
 
 export async function uploadDataObject(dataCollection, data, pb) {
+  let objectId = data.todoId === undefined ? data.subtaskId : data.todoId;
   console.log(
-    `[ApiHelper] -> Starting creation of data object with id '${data.todoId}'`
+    `[ApiHelper] -> Starting creation of data object with id '${objectId}'`
   );
   try {
     await pb
@@ -23,7 +24,7 @@ export async function uploadDataObject(dataCollection, data, pb) {
   try {
     await pb.collection(dataCollection).create(data);
   } catch (error) {
-    console.error(`[ApiHelper] -> error while creation of data object with id '${data.todoId}'`);
+    console.error(`[ApiHelper] -> error while creation of data object with id '${objectId}'`);
     displayGlobalAlert(
       'Something went wrong while uploading your todo!',
       alertType.error
@@ -31,14 +32,15 @@ export async function uploadDataObject(dataCollection, data, pb) {
     return false;
   }
   console.log(
-    `[ApiHelper] -> Finished creation of data object with id '${data.todoId}'`
+    `[ApiHelper] -> Finished creation of data object with id '${objectId}'`
   );
   return true;
 }
 
 export async function deleteDataObject(dataCollection, data, pb) {
+  let objectId = data.todoId === undefined ? data.subtaskId : data.todoId;
   console.log(
-    `[ApiHelper] -> Starting deletion of data object with id '${data.todoId}'`
+    `[ApiHelper] -> Starting deletion of data object with id '${objectId}'`
   );
   try {
     await pb
@@ -62,10 +64,10 @@ export async function deleteDataObject(dataCollection, data, pb) {
   try {
     const record = await pb
       .collection(dataCollection)
-      .getFirstListItem(`todoId="${data.todoId}"`);
+      .getFirstListItem(`todoId="${objectId}"`);
     todoRecordId = record.id;
   } catch (error) {
-    console.error(`[ApiHelper] -> error while deletion of data object with id '${data.todoId}'`);
+    console.error(`[ApiHelper] -> error while deletion of data object with id '${objectId}'`);
     displayGlobalAlert(
       'Something went wrong while communicating with the api server!',
       alertType.error
@@ -77,7 +79,7 @@ export async function deleteDataObject(dataCollection, data, pb) {
   try {
     await pb.collection(dataCollection).delete(todoRecordId);
   } catch (error) {
-    console.error(`[ApiHelper] -> error while deletion of data object with id '${data.todoId}'`);
+    console.error(`[ApiHelper] -> error while deletion of data object with id '${objectId}'`);
     displayGlobalAlert('Your todo could not be deleted!', alertType.error);
     return false;
   }
