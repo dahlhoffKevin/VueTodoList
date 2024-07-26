@@ -55,12 +55,13 @@ export default defineComponent({
     const TODOS = inject('TODOS');
     let SUBTASKS = ref(props.subtasks);
     let subtaskId = "";
+    let subtaskTitle = ref('');
 
     provide('SUBTASKS', SUBTASKS);
     provide('updateSubtaskArray', (newSubtaskArray) => {
       SUBTASKS.value = newSubtaskArray;
     });
-    
+
     const btnFinishTodo = () => {
       const newTodoArray = TODOS.value.filter(todo => todo.todoElementId !== props.todoElementId);
       updateTodoArray(newTodoArray);
@@ -74,20 +75,20 @@ export default defineComponent({
       const [date, time] = returnCurrentDateTimeArray();
       subtaskId = uuidv7();
 
-      var newSubtask = {
+      let newSubtask = {
         parentTodoId: props.todoElementId,
         subtaskId: subtaskId,
-        title: document.getElementById(`inputSubtaskTodo_${props.todoElementId}`).value,
+        title: subtaskTitle.value,
         isChecked: false
       };
 
-      var success = uploadDataObject('subtasks', newSubtask);
+      let success = uploadDataObject('subtasks', newSubtask);
       if (!success) return;
 
       SUBTASKS.value.push(newSubtask);
-      var updatedTodo = { todoElementId: props.todoElementId, timeAtUpdate: time, dateAtUpdate: date };
+      let updatedTodo = { todoElementId: props.todoElementId, timeAtUpdate: time, dateAtUpdate: date };
       updateTodoInMainArray(updatedTodo);
-      document.getElementById(`inputSubtaskTodo_${props.todoElementId}`).value = "";
+      subtaskTitle.value = '';
     };
 
     const btnDeleteTodo = () => {
@@ -97,6 +98,7 @@ export default defineComponent({
 
     return {
       SUBTASKS, // Make sure to return SUBTASKS to use it in the template
+      subtaskTitle,
       btnFinishTodo,
       btnOpenTodoEditDialog,
       btnAddSubtaskToTodo,
@@ -118,9 +120,9 @@ export default defineComponent({
     </div>
     <h4 :id="`todoTitle_${todoElementId}`" class="mb-1">{{ title }}</h4>
     <p :id="`todoDescription_${todoElementId}`" class="mb-1">{{ description }}</p>
-    <ul class="list-group" :id="`subtasksTodo_${todoElementId}`">
-      <div class="border-with-title">
-        <span class="title">Subtasks</span>
+    <div class="border-with-title">
+      <span class="title">Subtasks</span>
+      <ul class="list-group" :id="`subtasksTodo_${todoElementId}`">
         <li
           class="d-flex justify-content-between align-items-center"
           v-for="subtask in SUBTASKS"
@@ -133,11 +135,11 @@ export default defineComponent({
             :isChecked="subtask.isChecked"
           />
         </li>
-      </div>
-    </ul>
+      </ul>
+    </div>
     <div style="padding-top:20px!important;">
       <div class="d-flex justify-content-between align-items-center" style="padding-bottom: 10px;">
-        <input type="text" class="form-control" :id="`inputSubtaskTodo_${todoElementId}`" placeholder="Subtask Title">
+        <input type="text" class="form-control" :id="`inputSubtaskTodo_${todoElementId}`" placeholder="Subtask Title" v-model="subtaskTitle">
         <button :id="`btnAddSubtaskTodo_${todoElementId}`" @click="btnAddSubtaskToTodo" type="button" class="btn btn-outline-success" style="margin-left:5px;">
             Add
         </button>

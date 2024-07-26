@@ -36,7 +36,7 @@ function saveTodo() {
   editedTodo.value.dateAtUpdate = date;
   editedTodo.value.timeAtUpdate = time;
 
-  var newtodoArray = editedTodo.value;
+  let newtodoArray = editedTodo.value;
   updateTodoInMainArray(newtodoArray);
   closeDialog();
 }

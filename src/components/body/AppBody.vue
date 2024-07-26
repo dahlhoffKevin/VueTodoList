@@ -1,83 +1,29 @@
 <script setup>
 import { ref, computed, onMounted, provide } from "vue";
+import PocketBase from 'pocketbase';
 import EditTodoDialog from "../todoElements/EditTodoDialog.vue";
 import TodoElement from "../todoElements/TodoElement.vue";
-import { v7 as uuidv7 } from "uuid";
 import { displayGlobalAlert, alertType } from "../helpercode/AlertHelper.js";
-import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
-import PocketBase from 'pocketbase';
+import { updateTodoInMainArray, returnNewTodoObject, uploadDataObject, checkValidInput } from './AppBody.js'
 
 // SETUP SECTION -- START
 let TODOS = ref([]);
 let showEditDialog = ref(false);
 let currentTodo = ref();
-var newTodoDescription = ref(0);
+let newTodoDescription = ref(0);
 
 const pb = new PocketBase(process.env.VUE_APP_API_URL);
 
 provide('TODOS', TODOS);
-provide('uploadDataObject', uploadDataObject);
+provide('uploadDataObject', (dataCollection, data) =>
+  uploadDataObject(dataCollection, data, pb)
+);
 provide('updateTodoArray', (newTodoArray) => {
   TODOS.value = newTodoArray;
 });
 provide('updateTodoInMainArray', (todoElement) => {
-  console.log(todoElement);
-  if (!Array.isArray(TODOS.value)) {
-    return;
-  }
-  
-  // Find the index of the item with the matching todoElementId
-  const todoIndex = TODOS.value.findIndex(
-    (todo) => todo.todoElementId === todoElement.todoElementId
-  );
-
-  if (todoIndex === -1) {
-    displayGlobalAlert('We are sorry, but we could not update your todo! Please try again later.', alertType.error);
-    return;
-  }
-  
-  // Find the current todo object
-  const currentTodoObject = TODOS.value[todoIndex];
-  let updated = false; // Flag to check if we have any updates
-  
-  // Create a new object that will store the updated values
-  const updatedTodoObject = { ...currentTodoObject };
-
-  // Loop through the properties of the new todo element and only update properties in TODO array that has changed
-  for (const [key, value] of Object.entries(todoElement)) {
-    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      if (JSON.stringify(currentTodoObject[key]) !== JSON.stringify(value)) {
-        updatedTodoObject[key] = value;
-        updated = true;
-      }
-    } else if (Array.isArray(value)) {
-      if (!arraysAreEqual(currentTodoObject[key], value)) {
-        updatedTodoObject[key] = value;
-        updated = true;
-      }
-    } else {
-      if (currentTodoObject[key] !== value) {
-        updatedTodoObject[key] = value;
-        updated = true;
-      }
-    }
-  }
-
-  // If there are updates, assign the updated object to the array
-  if (updated) {
-    TODOS.value[todoIndex] = updatedTodoObject;
-    
-  } else displayGlobalAlert("A todo update request was detected, but there were no changes on the requested todo element found!", alertType.error);
+  updateTodoInMainArray(TODOS, todoElement)
 });
-
-// Helper function to compare two arrays
-function arraysAreEqual(arr1, arr2) {
-  if (arr1.length !== arr2.length) return false;
-  for (let i = 0; i < arr1.length; i++) {
-    if (arr1[i] !== arr2[i]) return false;
-  }
-  return true;
-}
 
 const totalTodosAdded = computed(() => {
   return TODOS.value.length;
@@ -93,7 +39,7 @@ function openEditDialog(todo) {
 }
 
 onMounted(() => {
-  var todoDescriptionTextArea = document.getElementById("todoDescription");
+  let todoDescriptionTextArea = document.getElementById("todoDescription");
   todoDescriptionTextArea.addEventListener("input", function () {
     newTodoDescription.value = todoDescriptionTextArea.value.length;
   });
@@ -106,67 +52,6 @@ function updateDescriptionLengthValue() {
     document.getElementById("todoDescription").value.length;
 }
 
-// function returnNewMetadataObjectForTodoObject() {
-// }
-
-function returnNewTodoObject(todoTitleValue, todoDescriptionValue, apiObject = false) {
-  const todoElementId = uuidv7();
-  const [date, time] = returnCurrentDateTimeArray();
-  
-  if (apiObject) {
-    return {
-      'todoId': todoElementId.toString(),
-      'title': todoTitleValue,
-      'description': todoDescriptionValue,
-      'isChecked': true,
-      'version': 1
-    };
-  }
-
-  return {
-    todoElementId: todoElementId,
-    Version: 1,
-    date: date,
-    time: time,
-    title: todoTitleValue,
-    description: todoDescriptionValue,
-    subtasks: [],
-    isChecked: false,
-    timeAtUpdate: null,
-    dateAtUpdate: null
-  };
-}
-
-async function uploadDataObject(dataCollection, data) {
-  try {
-    await pb.collection('users').authWithPassword(process.env.VUE_APP_API_USER, 
-      process.env.VUE_APP_API_USER_SECRET);
-  } catch (error) {
-    console.log(error);
-    displayGlobalAlert("We are currently experiencing server issues. Please try again later", alertType.error);
-    return false;
-  }
-  
-  try {
-    await pb.collection(dataCollection).create(data);
-  } catch (error) {
-    console.log(error);
-    displayGlobalAlert("Something went wrong while uploading your todo!", alertType.error);
-    return false;
-  }
-
-  return true;
-}
-
-function checkValidInput() {
-  var todoInput = document.getElementById("todoInput")?.value;
-  if (!todoInput) {
-    displayGlobalAlert("You need to provide a title for the todo", alertType.error);
-    return false;
-  }
-  return true;
-}
-
 async function createNewTodo() {
   if (!checkValidInput()) return;
 
@@ -175,7 +60,7 @@ async function createNewTodo() {
   const todoObject = returnNewTodoObject(todoTitleValue, todoDescriptionValue);
   const data = returnNewTodoObject(todoTitleValue, todoDescriptionValue, true);
 
-  var success = await uploadDataObject('todos', data);
+  let success = await uploadDataObject('todos', data, pb);
   if (!success) return;
 
   try {
@@ -243,7 +128,7 @@ function synchronizeTodos() {
               Add Todo
             </button>
             <button
-              type="button"
+              type="submit"
               class="btn btn-outline-success"
               style="margin-right: 10px"
               @click="synchronizeTodos"
@@ -271,7 +156,7 @@ function synchronizeTodos() {
                   id="todoList-list-group"
                   class="list-group"
                   v-for="todo in TODOS"
-                  :key="todo.Id"
+                  :key="todo.todoElementId"
                 >
                   <TodoElement
                     :todoElementId="todo.todoElementId"
@@ -282,6 +167,7 @@ function synchronizeTodos() {
                     :subtasks="todo.subtasks"
                     :timeAtUpdate="todo.timeAtUpdate"
                     :dateAtUpdate="todo.dateAtUpdate"
+                    :isChecked="todo.isChecked"
                     @edit-todo="openEditDialog"
                   />
                 </ul>
