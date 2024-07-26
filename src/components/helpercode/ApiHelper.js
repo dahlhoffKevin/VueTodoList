@@ -42,6 +42,9 @@ export async function deleteDataObject(dataCollection, data, pb) {
   console.log(
     `[ApiHelper] -> Starting deletion of data object with id '${objectId}'`
   );
+
+  let objectIdentifierFieldName = data.todoId === undefined ? 'subtaskId' : 'todoId';
+
   try {
     await pb
       .collection('users')
@@ -64,7 +67,7 @@ export async function deleteDataObject(dataCollection, data, pb) {
   try {
     const record = await pb
       .collection(dataCollection)
-      .getFirstListItem(`todoId="${objectId}"`);
+      .getFirstListItem(`${objectIdentifierFieldName}="${objectId}"`);
     todoRecordId = record.id;
   } catch (error) {
     console.error(`[ApiHelper] -> error while deletion of data object with id '${objectId}'`);
@@ -84,7 +87,7 @@ export async function deleteDataObject(dataCollection, data, pb) {
     return false;
   }
   console.log(
-    `[ApiHelper] -> Finished deletion of data object with id '${data.todoId}'`
+    `[ApiHelper] -> Finished deletion of data object with id '${objectId}'`
   );
   return true;
 }
