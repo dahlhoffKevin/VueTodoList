@@ -3,6 +3,7 @@ import { ref, inject, provide, defineComponent } from 'vue';
 import { v7 as uuidv7 } from "uuid";
 import SubtaskElement from './SubtaskElement.vue';
 import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
+import { alertType, displayGlobalAlert } from "../helpercode/AlertHelper.js";
  
 export default defineComponent({
   name: "TodoElement",
@@ -50,6 +51,7 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const uploadDataObject = inject('uploadDataObject');
+    const deleteDataObject = inject('deleteDataObject');
     const updateTodoArray = inject('updateTodoArray');
     const updateTodoInMainArray =  inject('updateTodoInMainArray');
     const TODOS = inject('TODOS');
@@ -91,7 +93,18 @@ export default defineComponent({
       subtaskTitle.value = '';
     };
 
-    const btnDeleteTodo = () => {
+    const btnDeleteTodo = async () => {
+      let response = await deleteDataObject(
+        'todos',
+        {
+          'todoId': props.todoElementId
+        }
+      );
+      console.log(response);
+      if (!response) {
+        displayGlobalAlert('Something went wrong while communicating with the api server. Please refresh the page!', alertType.error);
+        return;
+      }
       const newTodoArray = TODOS.value.filter(todo => todo.todoElementId !== props.todoElementId);
       updateTodoArray(newTodoArray);
     };

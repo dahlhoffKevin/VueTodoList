@@ -4,7 +4,9 @@ import PocketBase from 'pocketbase';
 import EditTodoDialog from "../todoElements/EditTodoDialog.vue";
 import TodoElement from "../todoElements/TodoElement.vue";
 import { displayGlobalAlert, alertType } from "../helpercode/AlertHelper.js";
-import { updateTodoInMainArray, returnNewTodoObject, uploadDataObject, checkValidInput } from './AppBody.js'
+import { updateTodoInMainArray, returnNewTodoObject, checkValidInput } from './AppBody.js'
+import { uploadDataObject, deleteDataObject } from '../helpercode/ApiHelper.js'
+import { v7 as uuidv7 } from "uuid";
 
 // SETUP SECTION -- START
 let TODOS = ref([]);
@@ -18,6 +20,9 @@ provide('TODOS', TODOS);
 provide('uploadDataObject', (dataCollection, data) =>
   uploadDataObject(dataCollection, data, pb)
 );
+provide('deleteDataObject', async (dataCollection, data) => {
+  return await deleteDataObject(dataCollection, data, pb);
+});
 provide('updateTodoArray', (newTodoArray) => {
   TODOS.value = newTodoArray;
 });
@@ -57,8 +62,9 @@ async function createNewTodo() {
 
   const todoTitleValue = document.getElementById("todoInput")?.value ?? "";
   const todoDescriptionValue = document.getElementById("todoDescription")?.value ?? "";
-  const todoObject = returnNewTodoObject(todoTitleValue, todoDescriptionValue);
-  const data = returnNewTodoObject(todoTitleValue, todoDescriptionValue, true);
+  const todoElementId = uuidv7();
+  const todoObject = returnNewTodoObject(todoElementId, todoTitleValue, todoDescriptionValue);
+  const data = returnNewTodoObject(todoElementId, todoTitleValue, todoDescriptionValue, true);
 
   let success = await uploadDataObject('todos', data, pb);
   if (!success) return;

@@ -1,7 +1,6 @@
 import { arraysAreEqual } from '../helpercode/CommonMethods.js';
 import { alertType, displayGlobalAlert } from '../helpercode/AlertHelper.js';
 import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
-import { v7 as uuidv7 } from "uuid";
 
 export function updateTodoInMainArray(mainTodoArray, todoElement) {
   if (!Array.isArray(mainTodoArray.value)) {
@@ -52,10 +51,9 @@ export function updateTodoInMainArray(mainTodoArray, todoElement) {
   } else displayGlobalAlert("A todo update request was detected, but there were no changes on the requested todo element found!", alertType.error);
 }
 
-export function returnNewTodoObject(todoTitleValue, todoDescriptionValue, apiObject = false) {
-  const todoElementId = uuidv7();
+export function returnNewTodoObject(todoElementId, todoTitleValue, todoDescriptionValue, apiObject = false) {
   const [date, time] = returnCurrentDateTimeArray();
-  
+
   if (apiObject) {
     return {
       'todoId': todoElementId.toString(),
@@ -78,27 +76,6 @@ export function returnNewTodoObject(todoTitleValue, todoDescriptionValue, apiObj
     timeAtUpdate: null,
     dateAtUpdate: null
   };
-}
-
-export async function uploadDataObject(dataCollection, data, pb) {
-  try {
-    await pb.collection('users').authWithPassword(process.env.VUE_APP_API_USER, 
-      process.env.VUE_APP_API_USER_SECRET);
-  } catch (error) {
-    console.log(error);
-    displayGlobalAlert("We are currently experiencing server issues. Please try again later", alertType.error);
-    return false;
-  }
-  
-  try {
-    await pb.collection(dataCollection).create(data);
-  } catch (error) {
-    console.log(error);
-    displayGlobalAlert("Something went wrong while uploading your todo!", alertType.error);
-    return false;
-  }
-
-  return true;
 }
 
 export function checkValidInput() {
