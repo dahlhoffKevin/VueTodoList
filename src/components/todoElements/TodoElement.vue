@@ -100,7 +100,7 @@ export default defineComponent({
           'todoId': props.todoElementId
         }
       );
-      console.log(response);
+      
       if (!response) {
         displayGlobalAlert('Something went wrong while communicating with the api server. Please refresh the page!', alertType.error);
         return;
