@@ -25,8 +25,8 @@ export default defineComponent({
   },
   setup(props) {
     const SUBTASKS = inject('SUBTASKS');
-    const updateSubtaskArrayFn = inject('updateSubtaskArray');
-    const updateTodoInMainArrayFn = inject('updateTodoInMainArray');
+    const updateSubtaskArray = inject('updateSubtaskArray');
+    const updateTodoInMainArray = inject('updateTodoInMainArray');
 
     const btnFinishSubtask = () => {
       const [date, time] = returnCurrentDateTimeArray();
@@ -43,8 +43,10 @@ export default defineComponent({
         displayGlobalAlert(`Subtask could not be updated: ${error}`, alertType.error);
         return;
       }
-      updateSubtaskArrayFn(SUBTASKS.value);
-      updateTodoInMainArrayFn({ todoElementId: props.parentTodoId, timeAtUpdate: time, dateAtUpdate: date });
+      updateSubtaskArray(SUBTASKS.value);
+
+      var updatedTodo = { todoElementId: props.parentTodoId, timeAtUpdate: time, dateAtUpdate: date };
+      updateTodoInMainArray(updatedTodo);
     };
 
     return {

@@ -66,7 +66,7 @@ provide('updateTodoInMainArray', (todoElement) => {
   // If there are updates, assign the updated object to the array
   if (updated) {
     TODOS.value[todoIndex] = updatedTodoObject;
-    displayGlobalAlert("Todo updated successfully", alertType.success);
+    
   } else displayGlobalAlert("A todo update request was detected, but there were no changes on the requested todo element found!", alertType.error);
 });
 

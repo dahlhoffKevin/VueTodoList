@@ -2,6 +2,7 @@
 import { ref, inject, provide, defineComponent } from 'vue';
 import { v7 as uuidv7 } from "uuid";
 import SubtaskElement from './SubtaskElement.vue';
+import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
  
 export default defineComponent({
   name: "TodoElement",
@@ -50,6 +51,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const uploadDataObject = inject('uploadDataObject');
     const updateTodoArray = inject('updateTodoArray');
+    const updateTodoInMainArray =  inject('updateTodoInMainArray');
     const TODOS = inject('TODOS');
     let SUBTASKS = ref(props.subtasks);
     let subtaskId = "";
@@ -69,6 +71,7 @@ export default defineComponent({
     };
 
     const btnAddSubtaskToTodo = () => {
+      const [date, time] = returnCurrentDateTimeArray();
       subtaskId = uuidv7();
 
       var newSubtask = {
@@ -82,6 +85,8 @@ export default defineComponent({
       if (!success) return;
 
       SUBTASKS.value.push(newSubtask);
+      var updatedTodo = { todoElementId: props.todoElementId, timeAtUpdate: time, dateAtUpdate: date };
+      updateTodoInMainArray(updatedTodo);
       document.getElementById(`inputSubtaskTodo_${props.todoElementId}`).value = "";
     };
 
