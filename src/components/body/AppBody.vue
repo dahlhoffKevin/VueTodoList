@@ -151,7 +151,7 @@ async function uploadDataObject(dataCollection, data) {
     await pb.collection(dataCollection).create(data);
   } catch (error) {
     console.log(error);
-    displayGlobalAlert("Something went wrong at uploading your todo!", alertType.error);
+    displayGlobalAlert("Something went wrong while uploading your todo!", alertType.error);
     return false;
   }
 
