@@ -20,8 +20,8 @@ provide('TODOS', TODOS);
 provide('uploadDataObject', (dataCollection, data) =>
   uploadDataObject(dataCollection, data, pb)
 );
-provide('deleteDataObject', async (dataCollection, data) => {
-  return await deleteDataObject(dataCollection, data, pb);
+provide('deleteDataObject', async (data) => {
+  return await deleteDataObject(data, pb);
 });
 provide('updateTodoArray', (newTodoArray) => {
   TODOS.value = newTodoArray;

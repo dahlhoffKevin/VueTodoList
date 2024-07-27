@@ -73,7 +73,7 @@ export default defineComponent({
       emit('edit-todo', props);
     };
 
-    const btnAddSubtaskToTodo = () => {
+    const btnAddSubtaskToTodo = async () => {
       const [date, time] = returnCurrentDateTimeArray();
       subtaskId = uuidv7();
 
@@ -84,8 +84,11 @@ export default defineComponent({
         isChecked: false
       };
 
-      let success = uploadDataObject('subtasks', newSubtask);
-      if (!success) return;
+      let success = await uploadDataObject('subtasks', newSubtask);
+      if (!success) {
+        displayGlobalAlert('Your subtask could not be added!', alertType.error);
+        return;
+      }
 
       SUBTASKS.value.push(newSubtask);
       let updatedTodo = { todoElementId: props.todoElementId, timeAtUpdate: time, dateAtUpdate: date };
@@ -95,9 +98,9 @@ export default defineComponent({
 
     const btnDeleteTodo = async () => {
       let response = await deleteDataObject(
-        'todos',
         {
-          'todoId': props.todoElementId
+          'todoId': props.todoElementId,
+          'subtasks': props.subtasks
         }
       );
       

@@ -51,7 +51,7 @@ export default defineComponent({
     };
 
     const btnDeleteSubtask = async () => {
-      const response = await deleteDataObject('subtasks', { subtaskId: props.subtaskId });
+      const response = await deleteDataObject({ subtaskId: props.subtaskId });
       if (!response) return;
 
       const newTodoArray = SUBTASKS.value.filter(subtask => subtask.subtaskId !== props.subtaskId);

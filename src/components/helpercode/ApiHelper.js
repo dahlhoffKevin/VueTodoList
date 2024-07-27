@@ -19,11 +19,32 @@ async function signInAtApi(pb) {
   return true;
 }
 
+async function returnObjectIdFromDatabase(dataCollection, objectIdentifierFieldName, objectId, pb) {
+  //get full list
+  let todoRecordId;
+  try {
+    const record = await pb
+      .collection(dataCollection)
+      .getFirstListItem(`${objectIdentifierFieldName}="${objectId}"`);
+    todoRecordId = record.id;
+  } catch (error) {
+    console.log(error);
+    console.error(`[ApiHelper] -> error while deletion of data object with id '${objectId}'`);
+    displayGlobalAlert(
+      'Something went wrong while communicating with the api server!',
+      alertType.error
+    );
+    return false;
+  }
+
+  return todoRecordId;
+}
+
 export async function loadTodosFromApi(todoMainArray, pb) {
   console.log('[ApiHelper] -> Starting import of todos');
   //sign in
   const success = await signInAtApi(pb);
-  if (!success) return false;
+  if (!success) return;
   
   //load all todos
   const todoRecords = await pb.collection('todos').getFullList({
@@ -96,8 +117,7 @@ export async function loadTodosFromApi(todoMainArray, pb) {
       console.log('[ApiHelper] -> Error while importing subtasks: no corresponding todo found');
     }
   }
-
-  console.log(newTodoMainArray);
+  console.log('[ApiHelper] -> Finished import of subtasks');
 
   todoMainArray.value = newTodoMainArray;
   console.log('[ApiHelper] -> Finished import of existing todos');
@@ -131,8 +151,10 @@ export async function uploadDataObject(dataCollection, data, pb) {
   return true;
 }
 
-export async function deleteDataObject(dataCollection, data, pb) {
+export async function deleteDataObject(data, pb) {
   let objectId = data.todoId === undefined ? data.subtaskId : data.todoId;
+  let dataCollection = data.todoId === undefined ? 'subtasks' : 'todos';
+
   console.log(
     `[ApiHelper] -> Starting deletion of data object with id '${objectId}'`
   );
@@ -142,26 +164,29 @@ export async function deleteDataObject(dataCollection, data, pb) {
   const success = await signInAtApi(pb);
   if (!success) return false;
 
-  //get full list
-  //get todo in list with todoElementId
-  let todoRecordId;
-  try {
-    const record = await pb
-      .collection(dataCollection)
-      .getFirstListItem(`${objectIdentifierFieldName}="${objectId}"`);
-    todoRecordId = record.id;
-  } catch (error) {
-    console.error(`[ApiHelper] -> error while deletion of data object with id '${objectId}'`);
-    displayGlobalAlert(
-      'Something went wrong while communicating with the api server!',
-      alertType.error
-    );
-    return false;
+  //delete subtasks if dataCollection == todo
+  if (dataCollection == 'todos' && data.subtasks.length !== 0) {
+    let subtasks = data.subtasks;
+    for (let subtask of subtasks) {
+      let subtaskObjectId = await returnObjectIdFromDatabase('subtasks', 'subtaskId', subtask.subtaskId, pb);
+      try {
+        console.log(`[ApiHelper] -> Starting deletion of data object with id '${subtask.subtaskId}'`);
+        await pb.collection('subtasks').delete(subtaskObjectId);
+        console.log(`[ApiHelper] -> Finished deletion of data object with id '${subtask.subtaskId}'`);
+      } catch (error) {
+        console.error(`[ApiHelper] -> error while deletion of data object with id '${subtask.subtaskId}'`);
+        displayGlobalAlert('Error while trieng to delete a subtask. Please reload the app!', alertType.error);
+        return false;
+      }
+    }
   }
+
+  const objectRecordId = await returnObjectIdFromDatabase(dataCollection, objectIdentifierFieldName, objectId, pb)
+  if (objectRecordId === false) return false;
 
   //delete todo with backend id
   try {
-    await pb.collection(dataCollection).delete(todoRecordId);
+    await pb.collection(dataCollection).delete(objectRecordId);
   } catch (error) {
     console.error(`[ApiHelper] -> error while deletion of data object with id '${objectId}'`);
     displayGlobalAlert('Your todo could not be deleted!', alertType.error);
