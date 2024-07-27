@@ -5,7 +5,7 @@ import EditTodoDialog from "../todoElements/EditTodoDialog.vue";
 import TodoElement from "../todoElements/TodoElement.vue";
 import { displayGlobalAlert, alertType } from "../helpercode/AlertHelper.js";
 import { updateTodoInMainArray, returnNewTodoObject, checkValidInput } from './AppBody.js'
-import { uploadDataObject, deleteDataObject } from '../helpercode/ApiHelper.js'
+import { uploadDataObject, deleteDataObject, loadTodosFromApi } from '../helpercode/ApiHelper.js'
 import { v7 as uuidv7 } from "uuid";
 
 // SETUP SECTION -- START
@@ -43,6 +43,9 @@ function openEditDialog(todo) {
   showEditDialog.value = true;
 }
 
+//load todos from api
+loadTodosFromApi(TODOS, pb);
+
 onMounted(() => {
   let todoDescriptionTextArea = document.getElementById("todoDescription");
   todoDescriptionTextArea.addEventListener("input", function () {
@@ -72,6 +75,7 @@ async function createNewTodo() {
   try {
     TODOS.value.push(todoObject);
   } catch (error) {
+    console.log(error);
     displayGlobalAlert("Something went wrong while adding your todo to the list", alertType.error);
     return;
   }
@@ -81,7 +85,6 @@ async function createNewTodo() {
 
   //reset reactive description length value manuelly
   updateDescriptionLengthValue();
-  pb.authStore.clear();
 }
 
 function synchronizeTodos() {
