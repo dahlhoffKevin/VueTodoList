@@ -9,7 +9,7 @@ async function signInAtApi(pb) {
         process.env.VUE_APP_API_USER_SECRET
       );
   } catch (error) {
-    console.error('[ApiHelper] -> error trieng to authenticate at api server');
+    console.error('[ApiHelper] -> error trying to authenticate at api server');
     displayGlobalAlert(
       'We are currently experiencing server issues. Please try again later',
       alertType.error
@@ -175,7 +175,7 @@ export async function deleteDataObject(data, pb) {
         console.log(`[ApiHelper] -> Finished deletion of data object with id '${subtask.subtaskId}'`);
       } catch (error) {
         console.error(`[ApiHelper] -> error while deletion of data object with id '${subtask.subtaskId}'`);
-        displayGlobalAlert('Error while trieng to delete a subtask. Please reload the app!', alertType.error);
+        displayGlobalAlert('Error while trying to delete a subtask. Please reload the app!', alertType.error);
         return false;
       }
     }
