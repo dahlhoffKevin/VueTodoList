@@ -1,6 +1,6 @@
 import { arraysAreEqual } from '../helpercode/CommonMethods.js';
 import { alertType, displayGlobalAlert } from '../helpercode/AlertHelper.js';
-import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
+import { returnCurrentDateTimeArray, formateDateAndTimeForApi } from "../helpercode/CommonMethods.js";
 
 export function updateTodoInMainArray(mainTodoArray, todoElement) {
   if (!Array.isArray(mainTodoArray.value)) {
@@ -51,31 +51,33 @@ export function updateTodoInMainArray(mainTodoArray, todoElement) {
   } else displayGlobalAlert("A todo update request was detected, but there were no changes on the requested todo element found!", alertType.error);
 }
 
-export function returnNewTodoObject(todoElementId, todoTitleValue, todoDescriptionValue, apiObject = false) {
+export function returnNewTodoObject(todoElementId, todoTitleValue, todoDescriptionValue) {
   const [date, time] = returnCurrentDateTimeArray();
 
-  if (apiObject) {
-    return {
-      'todoId': todoElementId.toString(),
-      'title': todoTitleValue,
-      'description': todoDescriptionValue,
-      'isChecked': true,
-      'version': 1
-    };
-  }
-
-  return {
-    todoElementId: todoElementId,
-    Version: 1,
-    date: date,
-    time: time,
-    title: todoTitleValue,
-    description: todoDescriptionValue,
-    subtasks: [],
-    isChecked: false,
-    timeAtUpdate: null,
-    dateAtUpdate: null
-  };
+  return [
+    {
+      id: todoElementId.toString(),
+      user: { id: '0079691b-b6ae-4bca-a817-ce84dd0cc550' },
+      title: todoTitleValue,
+      description: todoDescriptionValue,
+      isChecked: 0,
+      todoIndex: 0,
+      created: formateDateAndTimeForApi([date, time])
+    },
+    {
+      todoElementId: todoElementId,
+      Version: 1,
+      date: date,
+      time: time,
+      title: todoTitleValue,
+      description: todoDescriptionValue,
+      subtasks: [],
+      isChecked: false,
+      timeAtUpdate: null,
+      dateAtUpdate: null,
+      index: 0
+    }
+  ]
 }
 
 export function checkValidInput() {

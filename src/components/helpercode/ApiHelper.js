@@ -1,202 +1,314 @@
 import { alertType, displayGlobalAlert } from './AlertHelper.js';
+import { formatDate, isTokenExpired } from './CommonMethods.js';
+import { getAllTodos, uploadTodo, uploadSubtask, deleteTodoObject, deleteSubtaskObject } from './DaTodoBackend.js';
+import store from '../../store.js';
 
-async function signInAtApi(pb) {
-  try {
-    await pb
-      .collection('users')
-      .authWithPassword(
-        process.env.VUE_APP_API_USER,
-        process.env.VUE_APP_API_USER_SECRET
+async function signInAtApi() {
+  var username = process.env.VUE_APP_API_USER;
+  var password = process.env.VUE_APP_API_USER_SECRET;
+  var loginResponse;
+
+  console.log('[ApiHelper] -> Trying login at API...');
+  var token = store.state.jwtToken;
+  if (token == null) {
+    console.log('[ApiHelper] -> User not logged in. Logging in...');
+    loginResponse = await dispatchLogin(username, password);
+    if (!loginResponse) {
+      displayGlobalAlert(
+        'Something went wrong while communicating with the api server!',
+        alertType.error
       );
-  } catch (error) {
-    console.error('[ApiHelper] -> error trieng to authenticate at api server');
-    displayGlobalAlert(
-      'We are currently experiencing server issues. Please try again later',
-      alertType.error
-    );
-    return false;
+    }
+
+    return true;
   }
+
+  console.log('[ApiHelper] -> Token is present. Validating if token expired...');
+  if (isTokenExpired(token)) {
+    console.log('[ApiHelper] -> Token is expired. Requesting new token...');
+    store.dispatch('clearToken');
+    loginResponse = await dispatchLogin(username, password);
+    if (!loginResponse) {
+      displayGlobalAlert(
+        'Something went wrong while communicating with the api server!',
+        alertType.error
+      );
+    }
+  }
+
+  console.log('[ApiHelper] -> User logged in and token is valid. Continuing...');
   return true;
 }
 
-async function returnObjectIdFromDatabase(dataCollection, objectIdentifierFieldName, objectId, pb) {
-  //get full list
-  let todoRecordId;
+async function dispatchLogin(username, password) {
   try {
-    const record = await pb
-      .collection(dataCollection)
-      .getFirstListItem(`${objectIdentifierFieldName}="${objectId}"`);
-    todoRecordId = record.id;
+    await store.dispatch('login', {
+        username: username,
+        password: password,
+      }
+    );
+    return true;
   } catch (error) {
     console.log(error);
-    console.error(`[ApiHelper] -> error while deletion of data object with id '${objectId}'`);
-    displayGlobalAlert(
-      'Something went wrong while communicating with the api server!',
-      alertType.error
-    );
     return false;
   }
-
-  return todoRecordId;
 }
 
-export async function loadTodosFromApi(todoMainArray, pb) {
+// async function returnObjectIdFromDatabase(dataCollection, objectIdentifierFieldName, objectId, pb) {
+//   //get full list
+//   let todoRecordId;
+//   try {
+//     const record = await pb
+//       .collection(dataCollection)
+//       .getFirstListItem(`${objectIdentifierFieldName}="${objectId}"`);
+//     todoRecordId = record.id;
+//   } catch (error) {
+//     console.log(error);
+//     console.error(`[ApiHelper] -> error while deletion of data object with id '${objectId}'`);
+//     displayGlobalAlert(
+//       'Something went wrong while communicating with the api server!',
+//       alertType.error
+//     );
+//     return false;
+//   }
+
+//   return todoRecordId;
+// }
+
+export async function loadTodosFromApi(todoMainArray) {
   console.log('[ApiHelper] -> Starting import of todos');
-  //sign in
-  const success = await signInAtApi(pb);
-  if (!success) return;
-  
-  //load all todos
-  const todoRecords = await pb.collection('todos').getFullList({
-    sort: '-created',
-  });
 
-  console.log('[ApiHelper] -> Check for existing todos to import');
-  if (todoRecords.length == 0) {
-    console.log('[ApiHelper] -> Import of todos stopped! No todos to import');
-    return;
-  }
-  console.log('[ApiHelper] -> Todos found: continuing import');
-
-  //load all subtasks
-  const subtaskRecords = await pb.collection('subtasks').getFullList({
-    sort: 'created',
-  });
-
-  let newTodoMainArray = [];
-
-  //translate to todoApp Object { created, description, isChecked, title, todoId, updated (version) }
-  for (const todoObject of todoRecords) {
-    let newTodoObject = { 'subtasks': [] };
-
-    //add todos
-    for (const [key, value] of Object.entries(todoObject)) {
-      if (key == 'collectionId' || key == 'collectionName' || key == 'id' || key == 'version') continue;
-      if (key == 'created') {
-        let parts = value.split(' ');
-        newTodoObject['date'] = parts[0];
-        newTodoObject['time'] = parts[1].substring(0, 8);
-      }
-      if (key == 'description') newTodoObject['description'] = value;
-      if (key == 'isChecked') newTodoObject['isChecked'] = value;
-      if (key == 'title') newTodoObject['title'] = value;
-      if (key == 'todoId') newTodoObject['todoElementId'] = value;
-      if (key == 'updated') {
-        let parts = value.split(' ');
-        newTodoObject['dateAtUpdate'] = parts[0];
-        newTodoObject['timeAtUpdate'] = parts[1].substring(0, 8);
-      }
-    }
-
-    newTodoMainArray.push(newTodoObject);
-  }
-
-  console.log('[ApiHelper] -> Starting import of subtasks');
-  //filter and push subtasks
-  for (const subtask of subtaskRecords) {
-    let parentTodoId;
-
-    //extract parentTodoId
-    for (const [key, value] of Object.entries(subtask)) {
-      if (key === 'parentTodoId') {
-        parentTodoId = value;
-        break;
-      }
-    }
-
-    //find index in main array
-    let todoIndex = newTodoMainArray.findIndex(todo => todo.todoElementId === parentTodoId);
-    //check for existing todo
-    if (todoIndex !== -1) {
-      //add subtask to existing todo
-      if (!newTodoMainArray[todoIndex].subtasks) {
-          newTodoMainArray[todoIndex].subtasks = [];
-      }
-      newTodoMainArray[todoIndex].subtasks.push(subtask);
-    } else {
-      console.log('[ApiHelper] -> Error while importing subtasks: no corresponding todo found');
-    }
-  }
-  console.log('[ApiHelper] -> Finished import of subtasks');
-
-  todoMainArray.value = newTodoMainArray;
-  console.log('[ApiHelper] -> Finished import of existing todos');
-}
-
-export async function uploadDataObject(dataCollection, data, pb) {
-  let objectId = data.todoId === undefined ? data.subtaskId : data.todoId;
-  console.log(
-    `[ApiHelper] -> Starting creation of data object with id '${objectId}'`
-  );
-  
-  const success = await signInAtApi(pb);
+  // Sign in
+  const success = await signInAtApi();
   if (!success) return false;
 
+  let todoRecords;
   try {
-    await pb.collection(dataCollection).create(data);
+    todoRecords = await getAllTodos();
   } catch (error) {
-    console.error(`[ApiHelper] -> error while creation of data object with id '${objectId}'`);
+    console.error('[ApiHelper] -> Error while loading todos');
+    console.error(error);
+    return false; // Falls ein Fehler auftritt, beenden
+  }
+
+  if (!todoRecords.length) {
+    console.log('[ApiHelper] -> Import stopped! No todos to import');
+    return true;
+  }
+
+  console.log('[ApiHelper] -> Todos found: continuing import');
+  const newTodoMainArray = todoRecords.map(mapTodoObject);  // Verwende `map` für Effizienz
+
+  // Update das Array
+  todoMainArray.value = newTodoMainArray;
+  console.log('[ApiHelper] -> Finished import of existing todos');
+  return true;
+}
+
+// Hilfsfunktion zur Verarbeitung eines einzelnen Todo-Objekts
+function mapTodoObject(todoObject) {
+  const {
+    created, description, isChecked, title, id, updated, todoIndex, subtasks
+  } = todoObject;
+
+  let newTodoObject = {
+    date: formatDatePart(created, 0),
+    time: formatDatePart(created, 1),
+    description,
+    isChecked: isChecked === 1 ? true : false,
+    title,
+    todoElementId: id,
+    dateAtUpdate: formatDatePart(updated, 0),
+    timeAtUpdate: formatDatePart(updated, 1),
+    index: todoIndex,
+    subtasks: subtasks ? subtasks.map(mapSubtaskObject) : [] // Verwende `map` für Subtasks
+  };
+
+  return newTodoObject;
+}
+
+// Hilfsfunktion zur Verarbeitung eines Subtask-Objekts
+function mapSubtaskObject(subtaskObject) {
+  const { id, parentTodoId, title, isChecked } = subtaskObject;
+
+  return {
+    subtaskId: id,
+    parentTodoId,
+    title,
+    isChecked: isChecked === 1 ? true : false
+  };
+}
+
+// Hilfsfunktion zum Formatieren von Datums- und Zeitteilen
+function formatDatePart(dateString, partIndex) {
+  if (!dateString) return '';
+
+  const parts = dateString.split('T');
+
+  // Prüfen, ob das erwartete Format vorliegt (Datum und Uhrzeit)
+  if (parts.length < 2) {
+    if (partIndex === 0) {
+      console.log(parts[0])
+      var formatted = formatDate(parts[0])
+      console.log(formatted)
+      return formatted; // Falls nur das Datum vorliegt
+    }
+    return ''; // Wenn kein Uhrzeitteil vorhanden ist
+  }
+
+  // Ignoriere die Mikrosekunden (nach dem Punkt)
+  const timePart = parts[1].split('.')[0]; // Nimmt nur den Teil bis zu den Sekunden
+
+  // Falls beide Teile vorhanden sind, Datum oder Zeit zurückgeben
+  return partIndex === 0 ? formatDate(parts[0]) : timePart;
+}
+
+export async function uploadTodoObject(dataCollection, dataObject, pb) {
+  dataCollection;
+  pb;
+
+  const todoObjectId = dataObject.id;
+  console.log(
+    `[ApiHelper] -> Starting upload of todo object with id '${todoObjectId}'`
+  );
+
+  // Sign in
+  const success = await signInAtApi();
+  if (!success) return false;
+
+  let successUpload;
+
+  try {
+    successUpload = await uploadTodo(dataObject);
+  } catch (error) {
+    console.error(`[ApiHelper] -> error while creation of data object with id '${todoObjectId}'`);
     displayGlobalAlert(
       'Something went wrong while uploading your todo!',
       alertType.error
     );
     return false;
   }
+
+  if (!successUpload) {
+    console.log(
+      `[ApiHelper] -> Creation of data object with id '${todoObjectId}' failed`
+    );
+    return false;
+  }
+
   console.log(
-    `[ApiHelper] -> Finished creation of data object with id '${objectId}'`
+    `[ApiHelper] -> Finished creation of data object with id '${todoObjectId}'`
   );
 
-  // "logout" the last authenticated account
-  pb.authStore.clear();
+  return true;
+}
+ 
+export async function uploadSubtaskObject(newSubtask) {
+  const subtaskDataObject = {
+    id: newSubtask.subtaskId,
+    todo: { id: newSubtask.parentTodoId },
+    title: newSubtask.title,
+    isChecked: newSubtask.isChecked === true ? 1 : 0
+  };
+  
+  const subtaskId = subtaskDataObject.id;
+  console.log(
+    `[ApiHelper] -> Starting upload of todo object with id '${subtaskId}'`
+  );
+
+  // Sign in
+  const success = await signInAtApi();
+  if (!success) return false;
+
+  let successUpload;
+
+  try {
+    successUpload = await uploadSubtask(subtaskDataObject);
+  } catch (error) {
+    console.error(`[ApiHelper] -> error while creation of data object with id '${subtaskId}'`);
+    displayGlobalAlert(
+      'Something went wrong while uploading your todo!',
+      alertType.error
+    );
+    return false;
+  }
+
+  if (!successUpload) {
+    console.error(
+      `[ApiHelper] -> Creation of data object with id '${subtaskId}' failed`
+    );
+    return false;
+  }
+
+  console.log(
+    `[ApiHelper] -> Finished creation of data object with id '${subtaskId}'`
+  );
+
   return true;
 }
 
-export async function deleteDataObject(data, pb) {
+export async function deleteDataObject(data) {
+  let objectType = data.todoId === undefined ? 'SUBTASK' : 'TODO';
   let objectId = data.todoId === undefined ? data.subtaskId : data.todoId;
-  let dataCollection = data.todoId === undefined ? 'subtasks' : 'todos';
+  let objectIdKey = data.todoId === undefined ? 'subtaskId' : 'todoId';
+
+  // delete id key (todoId/subtaskId) and replace it with key (id)
+  if (objectIdKey == 'todoId') delete data.todoId;
+  if (objectIdKey == 'subtaskId') delete data.subtaskId;
+
+  data.id = objectId;
 
   console.log(
     `[ApiHelper] -> Starting deletion of data object with id '${objectId}'`
   );
 
-  let objectIdentifierFieldName = data.todoId === undefined ? 'subtaskId' : 'todoId';
-
-  const success = await signInAtApi(pb);
+  const success = await signInAtApi();
   if (!success) return false;
 
-  //delete subtasks if dataCollection == todo
-  if (dataCollection == 'todos' && data.subtasks.length !== 0) {
-    let subtasks = data.subtasks;
-    for (let subtask of subtasks) {
-      let subtaskObjectId = await returnObjectIdFromDatabase('subtasks', 'subtaskId', subtask.subtaskId, pb);
-      try {
-        console.log(`[ApiHelper] -> Starting deletion of data object with id '${subtask.subtaskId}'`);
-        await pb.collection('subtasks').delete(subtaskObjectId);
-        console.log(`[ApiHelper] -> Finished deletion of data object with id '${subtask.subtaskId}'`);
-      } catch (error) {
-        console.error(`[ApiHelper] -> error while deletion of data object with id '${subtask.subtaskId}'`);
-        displayGlobalAlert('Error while trieng to delete a subtask. Please reload the app!', alertType.error);
-        return false;
-      }
-    }
+  let deletionresponse = false;
+
+  if (objectType == 'TODO') {
+    let response = await deleteTodoDataObject(data);
+    deletionresponse = response;
+  }
+  if (objectType == 'SUBTASK'){
+    let response = await deleteSubtaskDataObject(data);
+    deletionresponse = response;
   }
 
-  const objectRecordId = await returnObjectIdFromDatabase(dataCollection, objectIdentifierFieldName, objectId, pb)
-  if (objectRecordId === false) return false;
-
-  //delete todo with backend id
-  try {
-    await pb.collection(dataCollection).delete(objectRecordId);
-  } catch (error) {
-    console.error(`[ApiHelper] -> error while deletion of data object with id '${objectId}'`);
-    displayGlobalAlert('Your todo could not be deleted!', alertType.error);
-    return false;
-  }
   console.log(
     `[ApiHelper] -> Finished deletion of data object with id '${objectId}'`
   );
 
-  // "logout" the last authenticated account
-  pb.authStore.clear();
-  return true;
+  return deletionresponse;
+}
+
+async function deleteTodoDataObject(todo) {
+  var deletionResponse;
+  try {
+    deletionResponse = await deleteTodoObject(todo);
+  } catch (error) {
+    console.error(error);
+    displayGlobalAlert(
+      'Something went wrong while deleting your todo!',
+      alertType.error
+    );
+    return false;
+  }
+  return deletionResponse;
+}
+
+async function deleteSubtaskDataObject(subtask) {
+  var deletionResponse;
+  try {
+    deletionResponse = await deleteSubtaskObject(subtask);
+  } catch (error) {
+    console.error(error);
+    displayGlobalAlert(
+      'Something went wrong while deleting your subtask!',
+      alertType.error
+    );
+    return false;
+  }
+  return deletionResponse;
 }

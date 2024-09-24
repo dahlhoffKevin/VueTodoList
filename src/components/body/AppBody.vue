@@ -5,24 +5,22 @@ import EditTodoDialog from "../todoElements/EditTodoDialog.vue";
 import TodoElement from "../todoElements/TodoElement.vue";
 import { displayGlobalAlert, alertType } from "../helpercode/AlertHelper.js";
 import { updateTodoInMainArray, returnNewTodoObject, checkValidInput } from './AppBody.js'
-import { uploadDataObject, deleteDataObject, loadTodosFromApi } from '../helpercode/ApiHelper.js'
+import { uploadTodoObject, loadTodosFromApi } from '../helpercode/ApiHelper.js' //deleteDataObject,
 import { v7 as uuidv7 } from "uuid";
 
 // SETUP SECTION -- START
 let TODOS = ref([]);
 let showEditDialog = ref(false);
+let showLoadingCircle = ref(false);
 let currentTodo = ref();
 let newTodoDescription = ref(0);
 
-const pb = new PocketBase(process.env.VUE_APP_API_URL);
+const pb = new PocketBase(process.env.VUE_APP_API_BASE_URL);
 
 provide('TODOS', TODOS);
-provide('uploadDataObject', (dataCollection, data) =>
-  uploadDataObject(dataCollection, data, pb)
-);
-provide('deleteDataObject', async (data) => {
-  return await deleteDataObject(data, pb);
-});
+// provide('deleteDataObject', async (data) => {
+//   return await deleteDataObject(data, pb);
+// });
 provide('updateTodoArray', (newTodoArray) => {
   TODOS.value = newTodoArray;
 });
@@ -44,7 +42,21 @@ function openEditDialog(todo) {
 }
 
 //load todos from api
-loadTodosFromApi(TODOS, pb);
+async function loadTodos() {
+  showLoadingCircle.value = true; // Ladekringel anzeigen
+  try {
+    let success = await loadTodosFromApi(TODOS, pb); // Warten, bis die Todos geladen sind
+    if (!success) {
+      displayGlobalAlert("Something went wrong while loading your todos!", alertType.error);
+    }
+  } catch (error) {
+    console.error(error);
+    displayGlobalAlert("An error occurred while loading your todos!", alertType.error);
+  } finally {
+    showLoadingCircle.value = false; // Ladekringel ausblenden
+  }
+}
+loadTodos();
 
 onMounted(() => {
   let todoDescriptionTextArea = document.getElementById("todoDescription");
@@ -66,14 +78,13 @@ async function createNewTodo() {
   const todoTitleValue = document.getElementById("todoInput")?.value ?? "";
   const todoDescriptionValue = document.getElementById("todoDescription")?.value ?? "";
   const todoElementId = uuidv7();
-  const todoObject = returnNewTodoObject(todoElementId, todoTitleValue, todoDescriptionValue);
-  const data = returnNewTodoObject(todoElementId, todoTitleValue, todoDescriptionValue, true);
+  const [data, todoObject] = returnNewTodoObject(todoElementId, todoTitleValue, todoDescriptionValue);
 
-  let success = await uploadDataObject('todos', data, pb);
+  let success = await uploadTodoObject('todos', data, pb);
   if (!success) return;
 
   try {
-    TODOS.value.push(todoObject);
+    TODOS.value.unshift(todoObject);
   } catch (error) {
     console.log(error);
     displayGlobalAlert("Something went wrong while adding your todo to the list", alertType.error);
@@ -149,7 +160,12 @@ function synchronizeTodos() {
         <div class="col">
           <div class="container text-left">
             <div class="row">
-              <div id="todoList" class="col">
+              <div class="d-flex justify-content-center" v-if="showLoadingCircle">
+                <div class="spinner-border" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+              <div id="todoList" class="col" v-else>
                 <div id="initialTodoHeadline">
                   <h4 style="text-align: center" v-show="totalTodosAdded === 0">
                     Add Todos to be displayed!
@@ -177,6 +193,7 @@ function synchronizeTodos() {
                     :timeAtUpdate="todo.timeAtUpdate"
                     :dateAtUpdate="todo.dateAtUpdate"
                     :isChecked="todo.isChecked"
+                    :index="todo.index"
                     @edit-todo="openEditDialog"
                   />
                 </ul>

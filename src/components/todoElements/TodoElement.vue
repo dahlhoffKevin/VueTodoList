@@ -4,6 +4,8 @@ import { v7 as uuidv7 } from "uuid";
 import SubtaskElement from './SubtaskElement.vue';
 import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
 import { alertType, displayGlobalAlert } from "../helpercode/AlertHelper.js";
+import { getNewTodoIndex } from '../helpercode/CommonMethods.js';
+import { uploadSubtaskObject, deleteDataObject } from '../helpercode/ApiHelper.js';
  
 export default defineComponent({
   name: "TodoElement",
@@ -47,17 +49,26 @@ export default defineComponent({
     isChecked: {
       type: Boolean,
       required: true,
+    },
+    index: {
+      type: Number,
+      required: true,
     }
   },
   setup(props, { emit }) {
-    const uploadDataObject = inject('uploadDataObject');
-    const deleteDataObject = inject('deleteDataObject');
+    // const deleteDataObject = inject('deleteDataObject');
     const updateTodoArray = inject('updateTodoArray');
     const updateTodoInMainArray =  inject('updateTodoInMainArray');
     const TODOS = inject('TODOS');
     let SUBTASKS = ref(props.subtasks);
     let subtaskId = "";
     let subtaskTitle = ref('');
+    let newIndex = 0;
+
+    if (props.index == undefined) {
+      let index = getNewTodoIndex(TODOS);
+      newIndex = index == 0 ? 1 : index;
+    }
 
     provide('SUBTASKS', SUBTASKS);
     provide('updateSubtaskArray', (newSubtaskArray) => {
@@ -84,7 +95,7 @@ export default defineComponent({
         isChecked: false
       };
 
-      let success = await uploadDataObject('subtasks', newSubtask);
+      let success = await uploadSubtaskObject(newSubtask);
       if (!success) {
         displayGlobalAlert('Your subtask could not be added!', alertType.error);
         return;
@@ -113,7 +124,8 @@ export default defineComponent({
     };
 
     return {
-      SUBTASKS, // Make sure to return SUBTASKS to use it in the template
+      SUBTASKS,
+      newIndex,
       subtaskTitle,
       btnFinishTodo,
       btnOpenTodoEditDialog,
@@ -127,7 +139,7 @@ export default defineComponent({
 <template>
   <a :id="`todoItem_${todoElementId}`" class="list-group-item" data-toggle="modal" data-target="todoDialog" aria-current="true" style="margin-bottom: 10px;">
     <div class="d-flex w-100 justify-content-between">
-      <p>TODO-0</p>
+      <p>TODO-{{ index === undefined ? newIndex: index }}</p>
       <div>
         <small :id="`todoDate_${todoElementId}`" class="mb-1">{{ date }}</small>
         <small> - </small>

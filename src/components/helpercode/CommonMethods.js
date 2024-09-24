@@ -1,7 +1,9 @@
+import { jwtDecode } from "jwt-decode";
+
 //-------------------------------------------------------------------------------------------
 /**
- * returns the current date and time as array
- */
+* returns the current date and time as array
+*/
 export function returnCurrentDateTimeArray() {
   //get date
   const currentDate = new Date();
@@ -21,11 +23,71 @@ export function returnCurrentDateTimeArray() {
 
   return [date, time];
 }
-
+//-------------------------------------------------------------------------------------------
+/**
+* checks if two arrays are equal
+*/
 export function arraysAreEqual(arr1, arr2) {
   if (arr1.length !== arr2.length) return false;
   for (let i = 0; i < arr1.length; i++) {
     if (arr1[i] !== arr2[i]) return false;
   }
   return true;
+}
+//-------------------------------------------------------------------------------------------
+/**
+* returns a new todo index
+*/
+export function getNewTodoIndex(mainTodoArray) {
+  return mainTodoArray.value.length;
+}
+//-------------------------------------------------------------------------------------------
+/**
+* formats date
+*/
+export function formatDate(inputDate) {
+  const [year, month, day] = inputDate.split('-');
+  const formattedDate = `${day}.${month}.${year}`;
+  return formattedDate;
+}
+export function formateDateAndTimeForApi(inputDateAndTime) {
+  //inputDateAndTime = [date, time]
+  const date = inputDateAndTime[0].split('.');
+  return `${date[2]}-${date[1]}-${date[0]}T${inputDateAndTime[1].replace(' Uhr', '')}.000000`;
+}
+//-------------------------------------------------------------------------------------------
+/**
+* check if jwt expired
+*/
+export function isTokenExpired(token) {
+  try {
+    const decodedToken = jwtDecode(token);  // JWT Token decodieren
+    const currentTime = Date.now() / 1000;   // Aktuelle Zeit in Sekunden (Unix-Zeit)
+
+    // Überprüfe, ob das Ablaufdatum kleiner ist als die aktuelle Zeit
+    if (decodedToken.exp < currentTime) {
+      return true;  // Token ist abgelaufen
+    } else {
+      return false; // Token ist noch gültig
+    }
+  } catch (error) {
+    console.error("Invalid token", error);
+    return true;  // Bei Fehlern nehmen wir an, der Token ist ungültig
+  }
+}
+//-------------------------------------------------------------------------------------------
+/**
+* get jwt expiration time
+*/
+export function getTokenExpiration(token) {
+  try {
+    const decodedToken = jwtDecode(token);
+    return decodedToken.exp;
+  } catch (error) {
+    console.error("Invalid token", error);
+    return null;
+  }
+}
+export function translateToApiObject(object) {
+  object;
 }
