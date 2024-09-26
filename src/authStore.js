@@ -4,7 +4,11 @@ import { createStore } from 'vuex'; // Korrektes Importieren von createStore aus
 export default createStore({
   state: {
     jwtToken: null,
-    expiration: ""
+    expiration: "",
+    userId: "",
+    userEmail: "",
+    userFirstname: "",
+    userLastname: ""
   },
   mutations: {
     setToken(state, token) {
@@ -16,6 +20,12 @@ export default createStore({
     clearToken(state) {
       state.jwtToken = null;
     },
+    setUser(state, user) {
+      state.userId = user.id;
+      state.userEmail = user.email;
+      state.userFirstname = user.firstname;
+      state.userLastname = user.lastname;
+    }
   },
   actions: {
     async login({ commit }, { username, password }) {
@@ -29,9 +39,12 @@ export default createStore({
       });
 
       if (response.ok) {
-        const token = await response.text();
-        commit('setToken', token);
+        const responseText = await response.text();
+        const token = responseText.split("},");
+        const userObject = JSON.parse(`${token[0]}}`.replace("[", ""));
+        commit('setToken', token[1].replace("\"", "").replace("]", ""));
         commit('setExpiration', 1800);
+        commit('setUser', userObject);
       } else {
         throw new Error('Login failed');
       }

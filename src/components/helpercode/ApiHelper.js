@@ -1,7 +1,7 @@
 import { alertType, displayGlobalAlert } from './AlertHelper.js';
-import { formatDate, isTokenExpired } from './CommonMethods.js';
-import { getAllTodos, uploadTodo, uploadSubtask, deleteTodoObject, deleteSubtaskObject } from './DaTodoBackend.js';
-import store from '../../store.js';
+import { formatDate, isTokenExpired, transformToApiObject } from './CommonMethods.js';
+import { getAllTodos, uploadTodo, uploadSubtask, deleteTodoObject, deleteSubtaskObject, updateTodo } from './DaTodoBackend.js';
+import authStore from '../../authStore.js';
 
 async function signInAtApi() {
   var username = process.env.VUE_APP_API_USER;
@@ -9,7 +9,7 @@ async function signInAtApi() {
   var loginResponse;
 
   console.log('[ApiHelper] -> Trying login at API...');
-  var token = store.state.jwtToken;
+  var token = authStore.state.jwtToken;
   if (token == null) {
     console.log('[ApiHelper] -> User not logged in. Logging in...');
     loginResponse = await dispatchLogin(username, password);
@@ -20,13 +20,14 @@ async function signInAtApi() {
       );
     }
 
+    console.log(`[ApiHelper] -> User logged in [${authStore.state.userId}]`);
     return true;
   }
 
   console.log('[ApiHelper] -> Token is present. Validating if token expired...');
   if (isTokenExpired(token)) {
     console.log('[ApiHelper] -> Token is expired. Requesting new token...');
-    store.dispatch('clearToken');
+    authStore.dispatch('clearToken');
     loginResponse = await dispatchLogin(username, password);
     if (!loginResponse) {
       displayGlobalAlert(
@@ -36,13 +37,13 @@ async function signInAtApi() {
     }
   }
 
-  console.log('[ApiHelper] -> User logged in and token is valid. Continuing...');
+  console.log(`[ApiHelper] -> User logged in [${authStore.state.userId}] and token is valid. Continuing...`);
   return true;
 }
 
 async function dispatchLogin(username, password) {
   try {
-    await store.dispatch('login', {
+    await authStore.dispatch('login', {
         username: username,
         password: password,
       }
@@ -53,27 +54,6 @@ async function dispatchLogin(username, password) {
     return false;
   }
 }
-
-// async function returnObjectIdFromDatabase(dataCollection, objectIdentifierFieldName, objectId, pb) {
-//   //get full list
-//   let todoRecordId;
-//   try {
-//     const record = await pb
-//       .collection(dataCollection)
-//       .getFirstListItem(`${objectIdentifierFieldName}="${objectId}"`);
-//     todoRecordId = record.id;
-//   } catch (error) {
-//     console.log(error);
-//     console.error(`[ApiHelper] -> error while deletion of data object with id '${objectId}'`);
-//     displayGlobalAlert(
-//       'Something went wrong while communicating with the api server!',
-//       alertType.error
-//     );
-//     return false;
-//   }
-
-//   return todoRecordId;
-// }
 
 export async function loadTodosFromApi(todoMainArray) {
   console.log('[ApiHelper] -> Starting import of todos');
@@ -92,7 +72,7 @@ export async function loadTodosFromApi(todoMainArray) {
   }
 
   if (!todoRecords.length) {
-    console.log('[ApiHelper] -> Import stopped! No todos to import');
+    console.log('[ApiHelper] -> Import stopped! No todos to import found!');
     return true;
   }
 
@@ -163,10 +143,7 @@ function formatDatePart(dateString, partIndex) {
   return partIndex === 0 ? formatDate(parts[0]) : timePart;
 }
 
-export async function uploadTodoObject(dataCollection, dataObject, pb) {
-  dataCollection;
-  pb;
-
+export async function uploadTodoObject(dataObject) {
   const todoObjectId = dataObject.id;
   console.log(
     `[ApiHelper] -> Starting upload of todo object with id '${todoObjectId}'`
@@ -190,6 +167,46 @@ export async function uploadTodoObject(dataCollection, dataObject, pb) {
   }
 
   if (!successUpload) {
+    console.log(
+      `[ApiHelper] -> Creation of data object with id '${todoObjectId}' failed`
+    );
+    return false;
+  }
+
+  console.log(
+    `[ApiHelper] -> Finished creation of data object with id '${todoObjectId}'`
+  );
+
+  return true;
+}
+
+export async function updateTodoObject(dataObject) {
+  console.log(dataObject);
+  const todoObjectId = dataObject.todoElementId;
+  console.log(
+    `[ApiHelper] -> Starting upload of todo object with id '${todoObjectId}'`
+  );
+
+  // Sign in
+  const success = await signInAtApi();
+  if (!success) return false;
+
+  let successUpdate;
+
+  try {
+    let translatedTodoObject = transformToApiObject(dataObject);
+    console.log(dataObject);
+    successUpdate = await updateTodo(translatedTodoObject);
+  } catch (error) {
+    console.error(`[ApiHelper] -> error while creation of data object with id '${todoObjectId}' :: ${error}`);
+    displayGlobalAlert(
+      'Something went wrong while uploading your todo!',
+      alertType.error
+    );
+    return false;
+  }
+
+  if (!successUpdate) {
     console.log(
       `[ApiHelper] -> Creation of data object with id '${todoObjectId}' failed`
     );
@@ -248,19 +265,25 @@ export async function uploadSubtaskObject(newSubtask) {
 }
 
 export async function deleteDataObject(data) {
-  let objectType = data.todoId === undefined ? 'SUBTASK' : 'TODO';
-  let objectId = data.todoId === undefined ? data.subtaskId : data.todoId;
-  let objectIdKey = data.todoId === undefined ? 'subtaskId' : 'todoId';
-
-  // delete id key (todoId/subtaskId) and replace it with key (id)
-  if (objectIdKey == 'todoId') delete data.todoId;
-  if (objectIdKey == 'subtaskId') delete data.subtaskId;
-
-  data.id = objectId;
+  let objectType = data.todoElementId === undefined ? 'SUBTASK' : 'TODO';
+  let objectId = data.todoElementId === undefined ? data.subtaskId : data.todoElementId;
 
   console.log(
     `[ApiHelper] -> Starting deletion of data object with id '${objectId}'`
   );
+
+  try {
+    console.log(data);
+    // translate data object to usable api data object
+    data = transformToApiObject(data);
+    console.log(data);
+  } catch (error) {
+    console.error(`[ApiHelper] -> Error try deleting data object with id '${objectId}' :: ${error}`);
+    displayGlobalAlert(
+      'Something went wrong while deleting your todo!',
+      alertType.error
+    );
+  }
 
   const success = await signInAtApi();
   if (!success) return false;
@@ -288,12 +311,11 @@ async function deleteTodoDataObject(todo) {
   try {
     deletionResponse = await deleteTodoObject(todo);
   } catch (error) {
-    console.error(error);
+    console.error(`[ApiHelper] -> Error try deleting data object :: ${error}`);
     displayGlobalAlert(
       'Something went wrong while deleting your todo!',
       alertType.error
     );
-    return false;
   }
   return deletionResponse;
 }
@@ -301,14 +323,14 @@ async function deleteTodoDataObject(todo) {
 async function deleteSubtaskDataObject(subtask) {
   var deletionResponse;
   try {
+    console.log(subtask);
     deletionResponse = await deleteSubtaskObject(subtask);
   } catch (error) {
-    console.error(error);
+    console.error(`[ApiHelper] -> Error try deleting data object :: ${error}`);
     displayGlobalAlert(
       'Something went wrong while deleting your subtask!',
       alertType.error
     );
-    return false;
   }
   return deletionResponse;
 }

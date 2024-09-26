@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed, onMounted, provide } from "vue";
-import PocketBase from 'pocketbase';
 import EditTodoDialog from "../todoElements/EditTodoDialog.vue";
 import TodoElement from "../todoElements/TodoElement.vue";
 import { displayGlobalAlert, alertType } from "../helpercode/AlertHelper.js";
@@ -15,12 +14,7 @@ let showLoadingCircle = ref(false);
 let currentTodo = ref();
 let newTodoDescription = ref(0);
 
-const pb = new PocketBase(process.env.VUE_APP_API_BASE_URL);
-
 provide('TODOS', TODOS);
-// provide('deleteDataObject', async (data) => {
-//   return await deleteDataObject(data, pb);
-// });
 provide('updateTodoArray', (newTodoArray) => {
   TODOS.value = newTodoArray;
 });
@@ -45,7 +39,7 @@ function openEditDialog(todo) {
 async function loadTodos() {
   showLoadingCircle.value = true; // Ladekringel anzeigen
   try {
-    let success = await loadTodosFromApi(TODOS, pb); // Warten, bis die Todos geladen sind
+    let success = await loadTodosFromApi(TODOS); // Warten, bis die Todos geladen sind
     if (!success) {
       displayGlobalAlert("Something went wrong while loading your todos!", alertType.error);
     }
@@ -80,7 +74,7 @@ async function createNewTodo() {
   const todoElementId = uuidv7();
   const [data, todoObject] = returnNewTodoObject(todoElementId, todoTitleValue, todoDescriptionValue);
 
-  let success = await uploadTodoObject('todos', data, pb);
+  let success = await uploadTodoObject(data);
   if (!success) return;
 
   try {

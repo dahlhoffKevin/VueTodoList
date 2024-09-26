@@ -2,6 +2,7 @@
 import { defineComponent, inject } from "vue";
 import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
 import { displayGlobalAlert, alertType } from "../helpercode/AlertHelper.js";
+import { deleteDataObject } from "../helpercode/ApiHelper.js";
 
 export default defineComponent({
   name: "SubtaskElement",
@@ -27,7 +28,6 @@ export default defineComponent({
     const SUBTASKS = inject('SUBTASKS');
     const updateSubtaskArray = inject('updateSubtaskArray');
     const updateTodoInMainArray = inject('updateTodoInMainArray');
-    // const deleteDataObject = inject('deleteDataObject');
 
     const btnFinishSubtask = () => {
       const [date, time] = returnCurrentDateTimeArray();
@@ -51,8 +51,8 @@ export default defineComponent({
     };
 
     const btnDeleteSubtask = async () => {
-      // const response = await deleteDataObject({ subtaskId: props.subtaskId });
-      // if (!response) return;
+      const response = await deleteDataObject({ subtaskId: props.subtaskId });
+      if (!response) return;
 
       const newTodoArray = SUBTASKS.value.filter(subtask => subtask.subtaskId !== props.subtaskId);
       updateSubtaskArray(newTodoArray);

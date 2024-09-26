@@ -1,4 +1,5 @@
 import { jwtDecode } from "jwt-decode";
+import authStore from '../../authStore.js';
 
 //-------------------------------------------------------------------------------------------
 /**
@@ -88,6 +89,57 @@ export function getTokenExpiration(token) {
     return null;
   }
 }
-export function translateToApiObject(object) {
-  object;
+//-------------------------------------------------------------------------------------------
+/**
+* translate data object to handleble api object
+*/
+export function transformToApiObject(object) {
+  const dataObjectId = object.todoElementId === undefined ? "subtaskId" : "todoElementId";
+
+  const fieldsMap = {
+    todoElementId: {
+      id: "todoElementId",
+      created: ["date", "time"],
+      title: "title",
+      description: "description",
+      subtasks: "subtasks",
+      updated: ["dateAtUpdate", "timeAtUpdate"],
+      isChecked: "isChecked",
+      todoIndex: "index"
+    },
+    subtaskId: {
+      id: "subtaskId",
+      todo: "todo",
+      title: "title",
+      isChecked: "isChecked"
+    }
+  };
+
+  const result = {};
+
+  const mapFields = fieldsMap[dataObjectId];
+
+  Object.keys(mapFields).forEach((key) => {
+    const value = mapFields[key];
+    if (Array.isArray(value) && object[value[0]] && object[value[1]]) {
+      result[key] = formateDateAndTimeForApi([object[value[0]], object[value[1]]]);
+    } else if (value === "subtasks" && Array.isArray(object.subtasks)) {
+      result[key] = object.subtasks.map(subtask => ({
+        id: subtask.subtaskId,
+        title: subtask.title,
+        isChecked: subtask.isChecked === "true" ? 1 : 0,
+        todo: { id: object.todoElementId }
+      }));
+    } else if (object[value] || typeof object[value] === "boolean" || typeof object[value] === "number") {
+      if (value === "isChecked") {
+        result[key] = object[value] === "true" ? 1 : 0;
+      } else {
+        result[key] = object[value];
+      }
+    }
+  });
+
+  result.user = { id: authStore.state.userId };
+  console.log(result);
+  return result;
 }

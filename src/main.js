@@ -1,10 +1,10 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import 'bootstrap/dist/css/bootstrap.css';
-import store from './store.js';
+import authStore from './authStore.js';
 
 const app = createApp(App);
-app.use(store);
+app.use(authStore);
 app.mount('#app');
 
 import 'bootstrap/dist/js/bootstrap.bundle.js';

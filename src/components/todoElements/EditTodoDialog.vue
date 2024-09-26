@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, defineEmits, defineProps, computed, inject } from 'vue';
 import { returnCurrentDateTimeArray } from "../helpercode/CommonMethods.js";
+import { updateTodoObject } from "../helpercode/ApiHelper.js";
 
 const props = defineProps({ todo: Object });
 const emit = defineEmits(['close-dialog']);
@@ -37,6 +38,10 @@ function saveTodo() {
   editedTodo.value.timeAtUpdate = time;
 
   let newtodoArray = editedTodo.value;
+  
+  let sucessUpdate = updateTodoObject(editedTodo.value);
+  if (!sucessUpdate) return;
+
   updateTodoInMainArray(newtodoArray);
   closeDialog();
 }
