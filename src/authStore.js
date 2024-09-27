@@ -1,14 +1,15 @@
-// store.js
-import { createStore } from 'vuex'; // Korrektes Importieren von createStore aus Vuex
+import { createStore } from 'vuex';
 
 export default createStore({
   state: {
     jwtToken: null,
-    expiration: "",
-    userId: "",
-    userEmail: "",
-    userFirstname: "",
-    userLastname: ""
+    expiration: null,
+    userId: null,
+    userUsername: null,
+    userPassword: null,
+    userEmail: null,
+    userFirstname: null,
+    userLastname: null
   },
   mutations: {
     setToken(state, token) {
@@ -17,14 +18,21 @@ export default createStore({
     setExpiration(state, expiration) {
       state.expiration = expiration
     },
-    clearToken(state) {
-      state.jwtToken = null;
-    },
     setUser(state, user) {
       state.userId = user.id;
       state.userEmail = user.email;
       state.userFirstname = user.firstname;
       state.userLastname = user.lastname;
+    },
+    setUsernameAndPassword(state, username, password) {
+      state.userUsername = username;
+      state.userPassword = password;
+    },
+    clearStore(state) {
+      state.userId = null;
+      state.userEmail = null;
+      state.userFirstname = null;
+      state.userLastname = null;
     }
   },
   actions: {
@@ -45,12 +53,13 @@ export default createStore({
         commit('setToken', token[1].replace("\"", "").replace("]", ""));
         commit('setExpiration', 1800);
         commit('setUser', userObject);
+        commit('setUsernameAndPassword', username, password );
       } else {
         throw new Error('Login failed');
       }
     },
     logout({ commit }) {
-      commit('clearToken');
+      commit('clearStore');
     },
   },
 });

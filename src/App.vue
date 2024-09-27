@@ -1,17 +1,18 @@
 <template>
   <AppHeader/>
-  <AppBody/>
+  <RouterView />
 </template>
 
 <script>
 import AppHeader from './components/header/AppHeader.vue';
-import AppBody from './components/body/AppBody.vue';
+// import LoginView from './components/body/views/LoginView.vue';
+// import AppBody from './components/body/AppBody.vue';
 
 export default {
   name: 'App',
   components: {
     AppHeader,
-    AppBody
+    // AppBody
   }
 }
 </script>

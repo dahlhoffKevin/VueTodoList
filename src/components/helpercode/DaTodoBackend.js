@@ -2,8 +2,10 @@ import authStore from "../../authStore.js";
 
 export async function getAllTodos() {
   const token = authStore.state.jwtToken;
-  const url = `${process.env.VUE_APP_API_BASE_URL}${process.env.VUE_APP_ENDPOINT_TODOS_GET_ALL}`;
-
+  const userId = authStore.state.userId;
+  const url = `${process.env.VUE_APP_API_BASE_URL}${process.env.VUE_APP_ENDPOINT_TODOS_GET_ALL}?userId=${userId}`;
+  console.log(url);
+  
   const response = await fetch(url, {
     method: "GET",
     headers: {

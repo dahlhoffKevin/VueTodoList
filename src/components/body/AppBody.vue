@@ -6,6 +6,15 @@ import { displayGlobalAlert, alertType } from "../helpercode/AlertHelper.js";
 import { updateTodoInMainArray, returnNewTodoObject, checkValidInput } from './AppBody.js'
 import { uploadTodoObject, loadTodosFromApi } from '../helpercode/ApiHelper.js' //deleteDataObject,
 import { v7 as uuidv7 } from "uuid";
+import authStore from '../../authStore.js';
+import { useRouter } from 'vue-router';
+
+// check if user logged in, when not then redirect to login page
+console.log(authStore.state.userId);
+if (authStore.state.userId == null) {
+  const router = useRouter();
+  router.push({ name: 'login' });
+}
 
 // SETUP SECTION -- START
 let TODOS = ref([]);
@@ -100,8 +109,8 @@ function synchronizeTodos() {
 
 <template>
   <div>
-    <div class="container text-center">
-      <h1 class="headline">Todo List</h1>
+    <div class="container text-left" v-if="authStore.state.userId">
+      <h3 class="headline">Welcome, {{ authStore.state.userUsername }}</h3>
     </div>
     <div
       id="globalAlertPlaceholder"
@@ -112,7 +121,6 @@ function synchronizeTodos() {
         <div class="col">
           <div class="innerBody-body">
             <div class="inputTodo">
-              <div id="liveAlertPlaceholder"></div>
               <label for="todoInput" class="form-label">Title</label>
               <input
                 type="text"

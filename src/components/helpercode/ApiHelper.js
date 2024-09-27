@@ -4,11 +4,17 @@ import { getAllTodos, uploadTodo, uploadSubtask, deleteTodoObject, deleteSubtask
 import authStore from '../../authStore.js';
 
 async function signInAtApi() {
-  var username = process.env.VUE_APP_API_USER;
-  var password = process.env.VUE_APP_API_USER_SECRET;
-  var loginResponse;
-
   console.log('[ApiHelper] -> Trying login at API...');
+
+  var username = authStore.state.userUsername;
+  var password = authStore.state.userPassword;
+
+  if (username === null || password === null) {
+    console.log('[ApiHelper] -> User not logged in');
+    return false;
+  }
+
+  var loginResponse;
   var token = authStore.state.jwtToken;
   if (token == null) {
     console.log('[ApiHelper] -> User not logged in. Logging in...');
@@ -24,10 +30,10 @@ async function signInAtApi() {
     return true;
   }
 
-  console.log('[ApiHelper] -> Token is present. Validating if token expired...');
+  console.log('[ApiHelper] -> Token is present. Validating if token is expired...');
   if (isTokenExpired(token)) {
     console.log('[ApiHelper] -> Token is expired. Requesting new token...');
-    authStore.dispatch('clearToken');
+    authStore.dispatch('clearStore');
     loginResponse = await dispatchLogin(username, password);
     if (!loginResponse) {
       displayGlobalAlert(
@@ -41,7 +47,7 @@ async function signInAtApi() {
   return true;
 }
 
-async function dispatchLogin(username, password) {
+export async function dispatchLogin(username, password) {
   try {
     await authStore.dispatch('login', {
         username: username,
@@ -65,6 +71,7 @@ export async function loadTodosFromApi(todoMainArray) {
   let todoRecords;
   try {
     todoRecords = await getAllTodos();
+    console.log(todoRecords);
   } catch (error) {
     console.error('[ApiHelper] -> Error while loading todos');
     console.error(error);
