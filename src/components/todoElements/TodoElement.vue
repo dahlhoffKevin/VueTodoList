@@ -8,6 +8,7 @@ import { getNewTodoIndex } from "../helpercode/CommonMethods.js";
 import {
   uploadSubtaskObject,
   deleteDataObject,
+  updateTodoObject
 } from "../helpercode/ApiHelper.js";
 
 export default defineComponent({
@@ -79,6 +80,15 @@ export default defineComponent({
     });
 
     const btnFinishTodo = () => {
+      //Updating todo in backend db
+      let newTodoState = !props.isChecked;
+      let updatedTodoObject = {
+        todoElementId: props.todoElementId,
+        isChecked: newTodoState,
+      };
+      updateTodoObject(updatedTodoObject);
+
+      //filter current todo from main todo array
       const newTodoArray = TODOS.value.filter(
         (todo) => todo.todoElementId !== props.todoElementId
       );

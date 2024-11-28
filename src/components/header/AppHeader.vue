@@ -1,6 +1,7 @@
 <script>
 import authStore from '../../authStore.js';
 import { defineComponent } from "vue";
+// import { useRouter } from 'vue-router';
 
 export default defineComponent({
   name: "AppHeader",
@@ -9,6 +10,8 @@ export default defineComponent({
 
     const submitLoginRequest = () => {
       authStore.dispatch('clearStore');
+      // const router = useRouter();
+      // router.push({ name: 'login' });
     };
 
     return {
@@ -44,5 +47,9 @@ export default defineComponent({
       </div>
     </div>
   </nav>
+  <div
+      id="globalAlertPlaceholder"
+      style="padding-right: 15%; padding-left: 15%"
+    ></div>
   <div id="liveAlertPlaceholder"></div>
 </template>

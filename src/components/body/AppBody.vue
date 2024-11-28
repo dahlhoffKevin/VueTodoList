@@ -10,7 +10,6 @@ import authStore from '../../authStore.js';
 import { useRouter } from 'vue-router';
 
 // check if user logged in, when not then redirect to login page
-console.log(authStore.state.userId);
 if (authStore.state.userId == null) {
   const router = useRouter();
   router.push({ name: 'login' });
@@ -46,6 +45,8 @@ function openEditDialog(todo) {
 
 //load todos from api
 async function loadTodos() {
+  if (authStore.state.userId == null) return;
+
   showLoadingCircle.value = true; // Ladekringel anzeigen
   try {
     let success = await loadTodosFromApi(TODOS); // Warten, bis die Todos geladen sind
@@ -59,9 +60,9 @@ async function loadTodos() {
     showLoadingCircle.value = false; // Ladekringel ausblenden
   }
 }
-loadTodos();
 
 onMounted(() => {
+  loadTodos();
   let todoDescriptionTextArea = document.getElementById("todoDescription");
   todoDescriptionTextArea.addEventListener("input", function () {
     newTodoDescription.value = todoDescriptionTextArea.value.length;
@@ -112,10 +113,6 @@ function synchronizeTodos() {
     <div class="container text-left" v-if="authStore.state.userId">
       <h3 class="headline">Welcome, {{ authStore.state.userUsername }}</h3>
     </div>
-    <div
-      id="globalAlertPlaceholder"
-      style="padding-right: 15%; padding-left: 15%"
-    ></div>
     <div class="container text-left">
       <div class="row">
         <div class="col">

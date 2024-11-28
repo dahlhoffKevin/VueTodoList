@@ -1,18 +1,22 @@
-import authStore from "../../authStore.js";
+import authStore from '../../authStore.js';
 
 export async function getAllTodos() {
   const token = authStore.state.jwtToken;
   const userId = authStore.state.userId;
   const url = `${process.env.VUE_APP_API_BASE_URL}${process.env.VUE_APP_ENDPOINT_TODOS_GET_ALL}?userId=${userId}`;
-  console.log(url);
-  
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token,
-    },
-  });
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+  }
 
   return response.json();
 }
@@ -22,14 +26,19 @@ export async function uploadTodo(todoObject) {
   const url = `${process.env.VUE_APP_API_BASE_URL}${process.env.VUE_APP_ENDPOINT_TODOS_CREATE}`;
   const token = authStore.state.jwtToken;
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token,
-    },
-    body: todoJsonObject
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+      },
+      body: todoJsonObject
+    });
+  } catch (error) {
+    console.error(error);
+  }
 
   if (response.ok) return true;
   return false;
@@ -40,16 +49,19 @@ export async function updateTodo(todoObject) {
   const url = `${process.env.VUE_APP_API_BASE_URL}${process.env.VUE_APP_ENDPOINT_TODOS_UPDATE}`;
   const token = authStore.state.jwtToken;
 
-  console.log(todoJsonObject);
-
-  const response = await fetch(url, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token,
-    },
-    body: todoJsonObject
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+      },
+      body: todoJsonObject
+    });
+  } catch (error) {
+    console.error(error);
+  }
 
   if (response.ok) return true;
   return false;
@@ -63,10 +75,10 @@ export async function uploadSubtask(subtaskObject) {
   let response;
   try {
     response = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token,
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
       },
       body: subtaskJsonObject
     });
@@ -88,10 +100,10 @@ export async function deleteTodoObject(todo) {
   let response;
   try {
     response = await fetch(url, {
-      method: "DELETE",
+      method: 'DELETE',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
       },
       body: todoJsonObject
     });
@@ -111,15 +123,36 @@ export async function deleteSubtaskObject(subtask) {
   let response;
   try {
     response = await fetch(url, {
-      method: "DELETE",
+      method: 'DELETE',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
       },
       body: subtaskJsonObject
     })
   } catch (error) {
-    console.log(error);
+    console.error(error);
+  }
+
+  if (response.ok) return true;
+  return false;
+}
+
+export async function createNewUser(user) {
+  const userJsonObject = JSON.stringify(user);
+  const url = `${process.env.VUE_APP_API_BASE_URL}${process.env.VUE_APP_ENDPOINT_USERS_CREATE}`;
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: userJsonObject
+    })
+  } catch (error) {
+    console.error(error);
   }
 
   if (response.ok) return true;

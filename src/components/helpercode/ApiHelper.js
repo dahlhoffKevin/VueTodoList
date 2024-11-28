@@ -1,7 +1,8 @@
 import { alertType, displayGlobalAlert } from './AlertHelper.js';
-import { formatDate, isTokenExpired, transformToApiObject } from './CommonMethods.js';
-import { getAllTodos, uploadTodo, uploadSubtask, deleteTodoObject, deleteSubtaskObject, updateTodo } from './DaTodoBackend.js';
+import { formatDate, isTokenExpired, transformToApiObject, returnCurrentDateTimeArray, formateDateAndTimeForApi } from './CommonMethods.js';
+import { getAllTodos, uploadTodo, uploadSubtask, deleteTodoObject, deleteSubtaskObject, updateTodo, createNewUser } from './DaTodoBackend.js';
 import authStore from '../../authStore.js';
+import { v7 as uuidv7 } from "uuid";
 
 async function signInAtApi() {
   console.log('[ApiHelper] -> Trying login at API...');
@@ -9,6 +10,9 @@ async function signInAtApi() {
   var username = authStore.state.userUsername;
   var password = authStore.state.userPassword;
 
+  //TODO: Check what happens when refreshToken is called and jwtToken new issued:
+  // - is username and password new set?
+  // - what happens when the user refreshes the page and refreshToken is triggered?
   if (username === null || password === null) {
     console.log('[ApiHelper] -> User not logged in');
     return false;
@@ -21,7 +25,7 @@ async function signInAtApi() {
     loginResponse = await dispatchLogin(username, password);
     if (!loginResponse) {
       displayGlobalAlert(
-        'Something went wrong while communicating with the api server!',
+        'Something went wrong! Please try again later',
         alertType.error
       );
     }
@@ -31,6 +35,7 @@ async function signInAtApi() {
   }
 
   console.log('[ApiHelper] -> Token is present. Validating if token is expired...');
+  console.log(token);
   if (isTokenExpired(token)) {
     console.log('[ApiHelper] -> Token is expired. Requesting new token...');
     authStore.dispatch('clearStore');
@@ -61,6 +66,21 @@ export async function dispatchLogin(username, password) {
   }
 }
 
+export async function dispatchRegistration(firstname, lastname, email, username, password) {
+  const [date, time] = returnCurrentDateTimeArray();
+  let userObject = {
+    id: uuidv7(),
+    firstname: firstname,
+    lastname: lastname,
+    email: email,
+    username: username,
+    password: password,
+    registeredAt: formateDateAndTimeForApi([date, time])
+  };
+  createNewUser(userObject);
+  return true;
+}
+
 export async function loadTodosFromApi(todoMainArray) {
   console.log('[ApiHelper] -> Starting import of todos');
 
@@ -71,7 +91,6 @@ export async function loadTodosFromApi(todoMainArray) {
   let todoRecords;
   try {
     todoRecords = await getAllTodos();
-    console.log(todoRecords);
   } catch (error) {
     console.error('[ApiHelper] -> Error while loading todos');
     console.error(error);
@@ -188,7 +207,6 @@ export async function uploadTodoObject(dataObject) {
 }
 
 export async function updateTodoObject(dataObject) {
-  console.log(dataObject);
   const todoObjectId = dataObject.todoElementId;
   console.log(
     `[ApiHelper] -> Starting upload of todo object with id '${todoObjectId}'`
